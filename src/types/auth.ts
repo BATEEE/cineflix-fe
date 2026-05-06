@@ -4,15 +4,18 @@ export interface LoginPayload {
 }
 
 export interface AuthResponse {
+  id: number;
   token: string;
   username: string;
   displayName: string;
   roleId: number;
+  roleName: string;
 }
 
 export interface User {
-  id: string;
+  id: number;
   username: string;
   displayName: string;
   roleId: number;
+  roleName: string;
 }
