@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   Film, 
   Eye, 
@@ -17,25 +18,33 @@ import {
   AreaChart
 } from 'recharts';
 
-const data = [
-  { name: 'T2', views: 4000, revenue: 2400 },
-  { name: 'T3', views: 3000, revenue: 1398 },
-  { name: 'T4', views: 2000, revenue: 9800 },
-  { name: 'T5', views: 2780, revenue: 3908 },
-  { name: 'T6', views: 1890, revenue: 4800 },
-  { name: 'T7', views: 2390, revenue: 3800 },
-  { name: 'CN', views: 3490, revenue: 4300 },
-];
-
-const topMovies = [
-  { id: 1, title: 'Inception', views: '2.4M', rating: 4.8 },
-  { id: 2, title: 'Interstellar', views: '1.8M', rating: 4.9 },
-  { id: 3, title: 'The Dark Knight', views: '1.5M', rating: 4.9 },
-  { id: 4, title: 'Oppenheimer', views: '1.2M', rating: 4.7 },
-  { id: 5, title: 'Tenet', views: '980K', rating: 4.5 },
-];
-
 export const DashboardPage = () => {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:5063/api/admin/dashboard/stats')
+      .then(res => res.json())
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch dashboard data:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div className="text-white p-8">Loading dashboard data...</div>;
+  }
+
+  if (!data) {
+    return <div className="text-white p-8">Error loading data.</div>;
+  }
+
+  const { stats, chartData, topMovies } = data;
+
   return (
     <div className="space-y-6">
       {/* Page Title */}
@@ -48,33 +57,33 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Tổng số Phim" 
-          value="1,245" 
-          change="+12%" 
-          isPositive={true}
+          value={stats.totalMovies.value.toLocaleString()} 
+          change={stats.totalMovies.change} 
+          isPositive={stats.totalMovies.isPositive}
           icon={Film}
           color="from-blue-500 to-cyan-400"
         />
         <StatCard 
-          title="Lượt xem tháng này" 
-          value="142.5K" 
-          change="+8.2%" 
-          isPositive={true}
+          title="Lượt xem hệ thống" 
+          value={stats.totalViews.value.toLocaleString()} 
+          change={stats.totalViews.change} 
+          isPositive={stats.totalViews.isPositive}
           icon={Eye}
           color="from-purple-500 to-pink-500"
         />
         <StatCard 
           title="Doanh thu tháng này" 
-          value="15.4M đ" 
-          change="-2.4%" 
-          isPositive={false}
+          value={`${stats.monthlyRevenue.value.toLocaleString()} đ`} 
+          change={stats.monthlyRevenue.change} 
+          isPositive={stats.monthlyRevenue.isPositive}
           icon={TrendingUp}
           color="from-emerald-400 to-teal-500"
         />
         <StatCard 
           title="Tổng user VIP" 
-          value="840" 
-          change="+15%" 
-          isPositive={true}
+          value={stats.totalVipUsers.value.toLocaleString()} 
+          change={stats.totalVipUsers.change} 
+          isPositive={stats.totalVipUsers.isPositive}
           icon={Crown}
           color="from-orange-400 to-red-500"
         />
@@ -94,7 +103,7 @@ export const DashboardPage = () => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
@@ -117,11 +126,11 @@ export const DashboardPage = () => {
         {/* Top 5 Movies List */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-white">Top 5 Phim Tuần</h2>
+            <h2 className="text-lg font-semibold text-white">Top 5 Phim</h2>
             <button className="text-red-500 text-sm hover:underline">Xem tất cả</button>
           </div>
           <div className="flex-1 flex flex-col gap-4">
-            {topMovies.map((movie, index) => (
+            {topMovies.map((movie: any, index: number) => (
               <div key={movie.id} className="flex items-center gap-4 group cursor-pointer hover:bg-gray-800/50 p-2 -mx-2 rounded-xl transition-colors">
                 <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center font-bold text-gray-400 group-hover:text-red-500 group-hover:bg-red-500/10 transition-colors">
                   {index + 1}
@@ -129,7 +138,7 @@ export const DashboardPage = () => {
                 <div className="flex-1 overflow-hidden">
                   <h4 className="text-white font-medium truncate">{movie.title}</h4>
                   <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {movie.views}</span>
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {movie.views.toLocaleString()}</span>
                     <span className="flex items-center gap-1 text-yellow-500">⭐ {movie.rating}</span>
                   </div>
                 </div>

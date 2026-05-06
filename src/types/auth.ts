@@ -1,18 +1,18 @@
-export interface LoginFormData {
-  email: string;
+export interface LoginPayload {
+  username: string;
   password: string;
 }
 
-export interface RegisterFormData {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
+export interface AuthResponse {
+  token: string;
+  username: string;
+  displayName: string;
+  roleId: number;
 }
 
 export interface User {
   id: string;
-  fullName: string;
-  email: string;
-  role: "user" | "admin";
+  username: string;
+  displayName: string;
+  roleId: number;
 }
