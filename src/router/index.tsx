@@ -7,6 +7,7 @@ import { DashboardPage } from '@/pages/admin/DashboardPage'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 import { HomePage } from '@/pages/HomePage'
+import { MovieDetailPage } from '@/pages/MovieDetailPage'
 
 export const router = createBrowserRouter([
   { path: '/login',          element: <AuthPage /> },
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'movie/:id', element: <MovieDetailPage /> },
       // Other routes like /movies, /tv-shows, /watch/:id, /profile will go here
     ]
   },
