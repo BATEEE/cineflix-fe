@@ -4,6 +4,8 @@ import { RegisterAdminPage } from '@/pages/RegisterAdminPage'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { MainLayout } from '@/layouts/MainLayout'
 import { DashboardPage } from '@/pages/admin/DashboardPage'
+import { MoviesManagementPage } from '@/pages/admin/MoviesManagementPage'
+import { EpisodesManagementPage } from '@/pages/admin/EpisodesManagementPage'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 import { HomePage } from '@/pages/HomePage'
@@ -37,6 +39,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/admin/dashboard" replace /> },
           { path: 'dashboard', element: <DashboardPage /> },
+          { path: 'movies', element: <MoviesManagementPage /> },
+          { path: 'episodes', element: <EpisodesManagementPage /> },
         ]
       }
     ]

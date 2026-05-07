@@ -25,6 +25,7 @@ export const AdminLayout = () => {
       title: "🎬 Nội dung",
       items: [
         { label: "Danh sách Phim", icon: Film, path: "/admin/movies" },
+        { label: "Tập phim & Trailer", icon: Video, path: "/admin/episodes" },
       ]
     },
     {
