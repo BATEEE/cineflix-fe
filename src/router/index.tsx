@@ -9,6 +9,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import { HomePage } from '@/pages/HomePage'
 import { MovieDetailPage } from '@/pages/MovieDetailPage'
 import { WatchPage } from '@/pages/WatchPage'
+import { ProfilePage } from '@/pages/ProfilePage'
 
 export const router = createBrowserRouter([
   { path: '/login',          element: <AuthPage /> },
@@ -23,7 +24,8 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'movie/:id', element: <MovieDetailPage /> },
       { path: 'watch/:id', element: <WatchPage /> },
-      // Other routes like /movies, /tv-shows, /profile will go here
+      { path: 'profile', element: <ProfilePage /> },
+      // Other routes like /movies, /tv-shows will go here
     ]
   },
   {
