@@ -8,6 +8,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 
 import { HomePage } from '@/pages/HomePage'
 import { MovieDetailPage } from '@/pages/MovieDetailPage'
+import { WatchPage } from '@/pages/WatchPage'
 
 export const router = createBrowserRouter([
   { path: '/login',          element: <AuthPage /> },
@@ -21,7 +22,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'movie/:id', element: <MovieDetailPage /> },
-      // Other routes like /movies, /tv-shows, /watch/:id, /profile will go here
+      { path: 'watch/:id', element: <WatchPage /> },
+      // Other routes like /movies, /tv-shows, /profile will go here
     ]
   },
   {
