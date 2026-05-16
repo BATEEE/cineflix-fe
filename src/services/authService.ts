@@ -1,5 +1,5 @@
 import axiosClient from '../api/axiosClient';
-import type { LoginPayload, RegisterPayload, VerifyPayload, ResendPayload, GoogleLoginPayload, ApiResponse, AuthResponseData } from '../types/auth';
+import type { LoginPayload, RegisterPayload, RegisterStudioOwnerPayload, VerifyPayload, ResendPayload, GoogleLoginPayload, ApiResponse, AuthResponseData } from '../types/auth';
 
 // Helper: decode JWT payload để lấy roleId
 function decodeJwtPayload(token: string): Record<string, any> {
@@ -13,9 +13,17 @@ function decodeJwtPayload(token: string): Record<string, any> {
 
 export function getRoleIdFromToken(token: string): number {
   const payload = decodeJwtPayload(token);
-  // JWT claim key: "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+  console.log('JWT Payload:', payload); // Debug để xem các keys thực tế
+  
+  // Tìm key chứa "role" (không phân biệt hoa thường)
   const roleKey = Object.keys(payload).find(k => k.toLowerCase().includes('role'));
-  return roleKey ? parseInt(payload[roleKey]) : 2;
+  
+  if (roleKey) {
+    const val = payload[roleKey];
+    return typeof val === 'number' ? val : parseInt(val);
+  }
+  
+  return 2; // Mặc định là User
 }
 
 const authService = {
@@ -52,6 +60,12 @@ const authService = {
   // Tạo tài khoản Admin (không cần OTP)
   registerAdmin: async (payload: RegisterPayload): Promise<ApiResponse> => {
     const response = await axiosClient.post('/api/auth/register-admin', payload);
+    return response.data;
+  },
+
+  // Tạo tài khoản Studio Owner
+  registerStudioOwner: async (payload: RegisterStudioOwnerPayload): Promise<ApiResponse> => {
+    const response = await axiosClient.post('/api/auth/register-studio-owner', payload);
     return response.data;
   },
 };

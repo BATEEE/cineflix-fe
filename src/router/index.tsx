@@ -1,12 +1,16 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AuthPage } from '@/pages/auth/AuthPage'
 import { RegisterAdminPage } from '@/pages/auth/RegisterAdminPage'
+import { RegisterPartnerPage } from '@/pages/auth/RegisterPartnerPage'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { MainLayout } from '@/layouts/MainLayout'
 import { DashboardPage } from '@/pages/admin/DashboardPage'
 import { MoviesManagementPage } from '@/pages/admin/MoviesManagementPage'
 import { EpisodesManagementPage } from '@/pages/admin/EpisodesManagementPage'
-import { AdminLoginPage } from '@/pages/admin/AdminLoginPage'
+import { StudioLayout } from '@/layouts/StudioLayout'
+import { StudioDashboard } from '@/pages/studio/StudioDashboard'
+import { StudioMoviesPage } from '@/pages/studio/StudioMoviesPage'
+import { StudioSettingsPage, StudioCommentsPage, StudioRevenuePage } from '@/pages/studio/StudioOtherPages'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 import { HomePage } from '@/pages/client/HomePage'
@@ -18,6 +22,7 @@ export const router = createBrowserRouter([
   { path: '/login',          element: <AuthPage /> },
   { path: '/register',       element: <AuthPage /> },
   { path: '/register-admin', element: <RegisterAdminPage /> },
+  { path: '/register-partner', element: <RegisterPartnerPage /> },
   
   // Public/User Routes with MainLayout
   {
@@ -31,10 +36,9 @@ export const router = createBrowserRouter([
       // Other routes like /movies, /tv-shows will go here
     ]
   },
-  { path: '/admin/login',    element: <AdminLoginPage /> },
   {
     path: '/admin',
-    element: <ProtectedRoute allowedRoles={['Admin']} />,
+    element: <ProtectedRoute allowedRoles={[1, 3]} />,
     children: [
       {
         element: <AdminLayout />,
@@ -43,6 +47,23 @@ export const router = createBrowserRouter([
           { path: 'dashboard', element: <DashboardPage /> },
           { path: 'movies', element: <MoviesManagementPage /> },
           { path: 'episodes', element: <EpisodesManagementPage /> },
+        ]
+      }
+    ]
+  },
+  {
+    path: '/studio',
+    element: <ProtectedRoute allowedRoles={[1, 3]} />,
+    children: [
+      {
+        element: <StudioLayout />,
+        children: [
+          { index: true, element: <Navigate to="/studio/dashboard" replace /> },
+          { path: 'dashboard', element: <StudioDashboard /> },
+          { path: 'movies', element: <StudioMoviesPage /> },
+          { path: 'comments', element: <StudioCommentsPage /> },
+          { path: 'revenue', element: <StudioRevenuePage /> },
+          { path: 'settings', element: <StudioSettingsPage /> },
         ]
       }
     ]

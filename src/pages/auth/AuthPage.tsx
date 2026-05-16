@@ -116,9 +116,16 @@ export const AuthPage = () => {
       }
       const { token, username, email, displayName, avt } = response.data
       const roleId = getRoleIdFromToken(token)
+      console.log('Detected Role ID:', roleId)
       loginStore({ username, email, displayName, avt, roleId }, token)
-      if (roleId === 1) navigate('/admin/dashboard')
-      else navigate('/')
+      
+      if (roleId === 1) {
+        navigate('/admin/dashboard')
+      } else if (roleId === 3) {
+        navigate('/studio/dashboard')
+      } else {
+        navigate('/')
+      }
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
       setServerError(typeof msg === 'string' ? msg : 'Email hoặc mật khẩu không đúng.')

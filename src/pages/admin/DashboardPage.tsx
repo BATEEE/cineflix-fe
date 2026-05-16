@@ -45,7 +45,14 @@ export const DashboardPage = () => {
     return <div className="text-red-400 p-8">{error || "Error loading data."}</div>;
   }
 
-  const { stats, chartData, topMovies } = data;
+  const { 
+    totalMovies, 
+    totalViews, 
+    monthlyRevenue, 
+    totalVipUsers, 
+    chartData, 
+    topMovies 
+  } = data;
 
   return (
     <div className="space-y-6">
@@ -59,33 +66,33 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Tổng số Phim" 
-          value={stats.totalMovies.value.toLocaleString()} 
-          change={stats.totalMovies.change} 
-          isPositive={stats.totalMovies.isPositive}
+          value={totalMovies?.value.toLocaleString() ?? '0'} 
+          change={totalMovies?.change ?? '0%'} 
+          isPositive={totalMovies?.isPositive ?? true}
           icon={Film}
           color="from-blue-500 to-cyan-400"
         />
         <StatCard 
           title="Lượt xem hệ thống" 
-          value={stats.totalViews.value.toLocaleString()} 
-          change={stats.totalViews.change} 
-          isPositive={stats.totalViews.isPositive}
+          value={totalViews?.value.toLocaleString() ?? '0'} 
+          change={totalViews?.change ?? '0%'} 
+          isPositive={totalViews?.isPositive ?? true}
           icon={Eye}
           color="from-purple-500 to-pink-500"
         />
         <StatCard 
           title="Doanh thu tháng này" 
-          value={`${stats.monthlyRevenue.value.toLocaleString()} đ`} 
-          change={stats.monthlyRevenue.change} 
-          isPositive={stats.monthlyRevenue.isPositive}
+          value={`${monthlyRevenue?.value.toLocaleString() ?? '0'} đ`} 
+          change={monthlyRevenue?.change ?? '0%'} 
+          isPositive={monthlyRevenue?.isPositive ?? true}
           icon={TrendingUp}
           color="from-emerald-400 to-teal-500"
         />
         <StatCard 
           title="Tổng user VIP" 
-          value={stats.totalVipUsers.value.toLocaleString()} 
-          change={stats.totalVipUsers.change} 
-          isPositive={stats.totalVipUsers.isPositive}
+          value={totalVipUsers?.value.toLocaleString() ?? '0'} 
+          change={totalVipUsers?.change ?? '0%'} 
+          isPositive={totalVipUsers?.isPositive ?? true}
           icon={Crown}
           color="from-orange-400 to-red-500"
         />
@@ -132,7 +139,7 @@ export const DashboardPage = () => {
             <button className="text-red-500 text-sm hover:underline">Xem tất cả</button>
           </div>
           <div className="flex-1 flex flex-col gap-4">
-            {topMovies.map((movie: any, index: number) => (
+            {topMovies?.map((movie: any, index: number) => (
               <div key={movie.id} className="flex items-center gap-4 group cursor-pointer hover:bg-gray-800/50 p-2 -mx-2 rounded-xl transition-colors">
                 <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center font-bold text-gray-400 group-hover:text-red-500 group-hover:bg-red-500/10 transition-colors">
                   {index + 1}
