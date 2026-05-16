@@ -1,25 +1,39 @@
-import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MovieFormModal } from './components/MovieFormModal';
-
-// Mock Data
-const mockMovies = [
-  { id: 1, title: 'Stranger Things 4', type: 2, release_date: '2022-05-27', is_premium: true, is_deleted: false, poster_path: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100' },
-  { id: 2, title: 'Interstellar', type: 1, release_date: '2014-11-07', is_premium: false, is_deleted: false, poster_path: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=100' },
-  { id: 3, title: 'The Witcher', type: 2, release_date: '2019-12-20', is_premium: true, is_deleted: true, poster_path: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=100' },
-];
+import movieService, { type MovieListItem } from '@/services/movieService';
 
 export const MoviesManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingMovie, setEditingMovie] = useState<any | null>(null);
+  const [editingMovie, setEditingMovie] = useState<MovieListItem | null>(null);
+  
+  const [movies, setMovies] = useState<MovieListItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleEdit = (movie: any) => {
+  const fetchMovies = async () => {
+    setLoading(true);
+    try {
+      const data = await movieService.getAll();
+      setMovies(data);
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi tải danh sách phim.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMovies();
+  }, []);
+
+  const handleEdit = (movie: MovieListItem) => {
     setEditingMovie(movie);
     setIsModalOpen(true);
   };
@@ -29,12 +43,23 @@ export const MoviesManagementPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleToggleDelete = (id: number, currentStatus: boolean) => {
-    console.log(`Toggling is_deleted for movie ${id} to ${!currentStatus}`);
-    // Call API here
+  const handleToggleDelete = async (id: number, currentStatus: boolean) => {
+    try {
+      await movieService.toggleStatus(id);
+      // Cập nhật state local thay vì fetch lại toàn bộ cho mượt
+      setMovies(prev => prev.map(m => m.id === id ? { ...m, isDeleted: !currentStatus } : m));
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi thay đổi trạng thái phim.");
+    }
   };
 
-  const filteredMovies = mockMovies.filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase()));
+  const handleSaveSuccess = () => {
+    setIsModalOpen(false);
+    fetchMovies();
+  };
+
+  const filteredMovies = movies.filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="p-8">
@@ -43,9 +68,14 @@ export const MoviesManagementPage = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Quản lý Phim</h1>
           <p className="text-gray-400">Xem, thêm, sửa, xóa các bộ phim trong hệ thống.</p>
         </div>
-        <Button onClick={handleAddNew} className="bg-brand-red text-white hover:bg-red-700 flex items-center gap-2 border-none">
-          <Plus className="w-4 h-4" /> Thêm phim mới
-        </Button>
+        <div className="flex gap-3">
+          <Button onClick={fetchMovies} variant="outline" className="border-gray-700 text-black hover:bg-gray-800 hover:text-white flex items-center gap-2">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Tải lại
+          </Button>
+          <Button onClick={handleAddNew} className="bg-brand-red text-white hover:bg-red-700 flex items-center gap-2 border-none">
+            <Plus className="w-4 h-4" /> Thêm phim mới
+          </Button>
+        </div>
       </div>
 
       <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
@@ -59,7 +89,6 @@ export const MoviesManagementPage = () => {
               className="pl-9 bg-gray-800 border-gray-700 text-white" 
             />
           </div>
-          {/* Add more filters here like Category, Type, etc. */}
         </div>
 
         <div className="overflow-x-auto">
@@ -77,26 +106,30 @@ export const MoviesManagementPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMovies.map((movie) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">Đang tải...</TableCell>
+                </TableRow>
+              ) : filteredMovies.map((movie) => (
                 <TableRow key={movie.id} className="border-gray-800 hover:bg-gray-800/50">
                   <TableCell className="font-medium text-white">#{movie.id}</TableCell>
                   <TableCell>
                     <div className="w-12 h-16 rounded overflow-hidden">
-                      <img src={movie.poster_path} alt={movie.title} className="w-full h-full object-cover" />
+                      <img src={movie.coverImg || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100'} alt={movie.title} className="w-full h-full object-cover" />
                     </div>
                   </TableCell>
                   <TableCell className="font-medium text-white">{movie.title}</TableCell>
                   <TableCell className="text-gray-300">{movie.type === 1 ? 'Phim Lẻ' : 'Phim Bộ'}</TableCell>
-                  <TableCell className="text-gray-300">{movie.release_date}</TableCell>
+                  <TableCell className="text-gray-300">{new Date(movie.releaseDate).toLocaleDateString('vi-VN')}</TableCell>
                   <TableCell>
-                    {movie.is_premium 
+                    {movie.isPremium 
                       ? <Badge className="bg-brand-gold text-black hover:bg-yellow-400">VIP</Badge> 
                       : <Badge variant="outline" className="text-gray-300 border-gray-600">Thường</Badge>}
                   </TableCell>
                   <TableCell>
                     <Switch 
-                      checked={movie.is_deleted} 
-                      onCheckedChange={() => handleToggleDelete(movie.id, movie.is_deleted)}
+                      checked={movie.isDeleted} 
+                      onCheckedChange={() => handleToggleDelete(movie.id, movie.isDeleted)}
                     />
                   </TableCell>
                   <TableCell className="text-right">
@@ -104,14 +137,12 @@ export const MoviesManagementPage = () => {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(movie)} className="text-gray-400 hover:text-white hover:bg-gray-700">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300 hover:bg-red-400/20">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {/* Có toggle trạng thái ở Switch, nút xoá mềm tạm thời có thể ẩn hoặc để */}
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredMovies.length === 0 && (
+              {!loading && filteredMovies.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     Không tìm thấy phim nào.
@@ -127,6 +158,7 @@ export const MoviesManagementPage = () => {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         movie={editingMovie} 
+        onSuccess={handleSaveSuccess}
       />
     </div>
   );

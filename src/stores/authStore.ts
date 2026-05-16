@@ -19,7 +19,6 @@ export const useAuthStore = create<AuthState>()(
       login: (user, token) => set({ user, token, isAuthenticated: true }),
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
-        // Xóa thêm cache hoặc thực hiện các logic logout khác nếu cần
       },
     }),
     { name: 'auth-storage' }

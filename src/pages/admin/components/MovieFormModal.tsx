@@ -5,46 +5,53 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import movieService, { type CreateMoviePayload, type MovieListItem } from '@/services/movieService';
 
 interface MovieFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  movie?: any | null; // null means Add new
+  movie?: MovieListItem | null; // null means Add new
+  onSuccess?: () => void;
 }
 
-export const MovieFormModal: React.FC<MovieFormModalProps> = ({ isOpen, onClose, movie }) => {
+export const MovieFormModal: React.FC<MovieFormModalProps> = ({ isOpen, onClose, movie, onSuccess }) => {
   const isEditing = !!movie;
+  const [loading, setLoading] = useState(false);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CreateMoviePayload>({
     title: '',
-    original_title: '',
-    poster_path: '',
-    backdrop_path: '',
-    type: '1',
-    is_premium: false,
-    release_date: '',
+    description: '',
+    coverImg: '',
+    type: 1,
+    isPremium: false,
+    releaseDate: new Date().toISOString().split('T')[0],
+    studioId: 1, // Default, should ideally fetch from studioService
+    genreIds: [],
   });
 
   useEffect(() => {
-    if (movie) {
+    if (movie && isOpen) {
+      // In real app, might need to fetch full movie details to get studioId, genreIds
       setFormData({
         title: movie.title || '',
-        original_title: movie.original_title || '',
-        poster_path: movie.poster_path || '',
-        backdrop_path: movie.backdrop_path || '',
-        type: movie.type?.toString() || '1',
-        is_premium: movie.is_premium || false,
-        release_date: movie.release_date || '',
+        description: movie.description || '',
+        coverImg: movie.coverImg || '',
+        type: movie.type || 1,
+        isPremium: movie.isPremium || false,
+        releaseDate: movie.releaseDate?.split('T')[0] || '',
+        studioId: 1, // Mock
+        genreIds: [], // Mock
       });
-    } else {
+    } else if (isOpen) {
       setFormData({
         title: '',
-        original_title: '',
-        poster_path: '',
-        backdrop_path: '',
-        type: '1',
-        is_premium: false,
-        release_date: '',
+        description: '',
+        coverImg: '',
+        type: 1,
+        isPremium: false,
+        releaseDate: new Date().toISOString().split('T')[0],
+        studioId: 1,
+        genreIds: [],
       });
     }
   }, [movie, isOpen]);
@@ -54,10 +61,24 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({ isOpen, onClose,
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    console.log("Saving movie...", formData);
-    // TODO: Call API to save/update
-    onClose();
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      if (isEditing && movie?.id) {
+        await movieService.update(movie.id, formData);
+        alert("Cập nhật phim thành công!");
+      } else {
+        await movieService.create(formData);
+        alert("Thêm phim mới thành công!");
+      }
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Đã có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,19 +87,15 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({ isOpen, onClose,
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">{isEditing ? 'Sửa thông tin phim' : 'Thêm phim mới'}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="title" className="text-right text-gray-300">Tên phim</Label>
             <Input id="title" name="title" value={formData.title} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="original_title" className="text-right text-gray-300">Tên gốc</Label>
-            <Input id="original_title" name="original_title" value={formData.original_title} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right text-gray-300">Loại phim</Label>
             <div className="col-span-3">
-              <Select value={formData.type} onValueChange={(val) => setFormData(prev => ({ ...prev, type: val }))}>
+              <Select value={formData.type.toString()} onValueChange={(val) => setFormData(prev => ({ ...prev, type: Number(val) }))}>
                 <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
                   <SelectValue placeholder="Chọn loại phim" />
                 </SelectTrigger>
@@ -90,27 +107,30 @@ export const MovieFormModal: React.FC<MovieFormModalProps> = ({ isOpen, onClose,
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="poster_path" className="text-right text-gray-300">Link Poster</Label>
-            <Input id="poster_path" name="poster_path" value={formData.poster_path} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
+            <Label htmlFor="coverImg" className="text-right text-gray-300">Link Poster</Label>
+            <Input id="coverImg" name="coverImg" value={formData.coverImg} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="backdrop_path" className="text-right text-gray-300">Link Backdrop</Label>
-            <Input id="backdrop_path" name="backdrop_path" value={formData.backdrop_path} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
+            <Label htmlFor="releaseDate" className="text-right text-gray-300">Ngày phát hành</Label>
+            <Input id="releaseDate" type="date" name="releaseDate" value={formData.releaseDate} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="release_date" className="text-right text-gray-300">Ngày phát hành</Label>
-            <Input id="release_date" type="date" name="release_date" value={formData.release_date} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="is_premium" className="text-right text-gray-300">Phim VIP</Label>
+            <Label htmlFor="isPremium" className="text-right text-gray-300">Phim VIP</Label>
             <div className="col-span-3 flex items-center">
-              <Switch id="is_premium" checked={formData.is_premium} onCheckedChange={(val) => setFormData(prev => ({ ...prev, is_premium: val }))} />
+              <Switch id="isPremium" checked={formData.isPremium} onCheckedChange={(val) => setFormData(prev => ({ ...prev, isPremium: val }))} />
             </div>
           </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right text-gray-300">Mô tả ngắn</Label>
+            <Input id="description" name="description" value={formData.description} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
+          </div>
+          {/* Note: Studio ID and Genre IDs are hardcoded in this simple implementation */}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="bg-transparent border-gray-700 text-white hover:bg-gray-800">Hủy</Button>
-          <Button onClick={handleSave} className="bg-brand-red text-white hover:bg-red-700">Lưu thay đổi</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading} className="bg-transparent border-gray-700 text-white hover:bg-gray-800">Hủy</Button>
+          <Button onClick={handleSave} disabled={loading} className="bg-brand-red text-white hover:bg-red-700">
+            {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

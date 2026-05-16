@@ -1,33 +1,50 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { Clock, Heart, Crown, Settings, Play } from 'lucide-react';
-
-const mockHistory = [
-  { id: 1, movieId: 1, title: 'Stranger Things 4', episode: 'Tập 1: Câu lạc bộ Hellfire', progress: 45, image: 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=400&auto=format&fit=crop' },
-  { id: 2, movieId: 2, title: 'The Witcher', episode: 'Tập 3: Kẻ sát nhân', progress: 80, image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400&auto=format&fit=crop' },
-];
-
-const mockFavorites = [
-  { id: 101, title: 'Interstellar', image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop' },
-  { id: 102, title: 'Inception', image: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=400&auto=format&fit=crop' },
-  { id: 103, title: 'Dark Knight', image: 'https://images.unsplash.com/photo-1507924538820-ede94a04019d?q=80&w=400&auto=format&fit=crop' },
-];
-
-const mockVipPackages = [
-  { id: 1, name: 'Cơ bản', price: '50,000đ', duration: '1 Tháng', features: ['Quảng cáo', 'Chất lượng HD'] },
-  { id: 2, name: 'Tiêu chuẩn', price: '120,000đ', duration: '3 Tháng', features: ['Không quảng cáo', 'Chất lượng Full HD', 'Tải phim'] },
-  { id: 3, name: 'Cao cấp', price: '400,000đ', duration: '12 Tháng', features: ['Không quảng cáo', 'Chất lượng 4K', 'Tải phim', 'Độc quyền'] },
-];
+import watchHistoryService, { type WatchHistoryItem } from '@/services/watchHistoryService';
+import favListService, { type FavListItem } from '@/services/favListService';
+import vipPackageService, { type VipPackage } from '@/services/vipPackageService';
 
 export const ProfilePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'history';
   const { user } = useAuthStore();
 
+  const [history, setHistory] = useState<WatchHistoryItem[]>([]);
+  const [favorites, setFavorites] = useState<FavListItem[]>([]);
+  const [vipPackages, setVipPackages] = useState<VipPackage[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const handleTabChange = (tab: string) => {
     setSearchParams({ tab });
   };
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (activeTab === 'history') {
+          const data = await watchHistoryService.getHistory();
+          setHistory(data);
+        } else if (activeTab === 'mylist') {
+          const data = await favListService.getMyList();
+          setFavorites(data);
+        } else if (activeTab === 'vip') {
+          const data = await vipPackageService.getAll();
+          setVipPackages(data);
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải dữ liệu trang cá nhân:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [activeTab, user]);
 
   if (!user) {
     return (
@@ -44,7 +61,7 @@ export const ProfilePage = () => {
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-12 bg-gray-900 p-8 rounded-2xl border border-gray-800">
           <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-gray-700 shrink-0 bg-gray-800">
-             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} alt="Avatar" className="w-full h-full object-cover" />
+             <img src={user.avt || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} alt="Avatar" className="w-full h-full object-cover" />
           </div>
           <div className="text-center md:text-left flex-1">
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{user.displayName || user.username}</h1>
@@ -54,7 +71,7 @@ export const ProfilePage = () => {
                 <Crown className="w-4 h-4" /> THÀNH VIÊN VIP
               </span>
               <span className="bg-gray-800 text-gray-300 text-xs font-medium px-3 py-1 rounded border border-gray-700">
-                Gia nhập: Tháng 5, 2026
+                Gia nhập: 2026
               </span>
             </div>
           </div>
@@ -93,84 +110,96 @@ export const ProfilePage = () => {
 
         {/* Tab Content */}
         <div className="min-h-[400px]">
-          {/* Watch History */}
-          {activeTab === 'history' && (
-            <div>
-              <h2 className="text-xl font-bold text-white mb-6">Đang xem dở</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {mockHistory.map(item => (
-                  <Link key={item.id} to={`/watch/${item.movieId}`} className="group bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-gray-600 transition-colors">
-                    <div className="relative aspect-video">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                         <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center bg-black/50">
-                           <Play className="w-6 h-6 fill-white ml-1" />
-                         </div>
-                      </div>
-                      <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
-                        <div className="h-full bg-brand-red" style={{ width: `${item.progress}%` }}></div>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-white font-medium mb-1 line-clamp-1">{item.title}</h3>
-                      <p className="text-sm text-gray-400">{item.episode}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* My List */}
-          {activeTab === 'mylist' && (
-            <div>
-              <h2 className="text-xl font-bold text-white mb-6">Danh sách của tôi</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {mockFavorites.map(item => (
-                  <Link key={item.id} to={`/movie/${item.id}`} className="group relative rounded-md overflow-hidden aspect-[2/3]">
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                       <h3 className="text-white font-medium text-sm line-clamp-2">{item.title}</h3>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* VIP Packages */}
-          {activeTab === 'vip' && (
-            <div>
-              <div className="text-center max-w-2xl mx-auto mb-10">
-                <h2 className="text-3xl font-bold text-white mb-4">Nâng cấp trải nghiệm điện ảnh</h2>
-                <p className="text-gray-400">Chọn gói cước phù hợp với bạn để thưởng thức kho phim bản quyền, không quảng cáo với chất lượng lên đến 4K.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {mockVipPackages.map((pkg, idx) => (
-                  <div key={pkg.id} className={`rounded-2xl p-6 border ${idx === 1 ? 'bg-gradient-to-b from-brand-gold/20 to-gray-900 border-brand-gold' : 'bg-gray-900 border-gray-800'} flex flex-col`}>
-                    {idx === 1 && <span className="bg-brand-gold text-black text-xs font-bold px-3 py-1 rounded-full w-max mb-4">PHỔ BIẾN NHẤT</span>}
-                    <h3 className="text-2xl font-bold text-white mb-2">{pkg.name}</h3>
-                    <div className="mb-6 flex items-baseline gap-1">
-                      <span className="text-3xl font-black text-white">{pkg.price}</span>
-                      <span className="text-gray-400">/{pkg.duration}</span>
-                    </div>
-                    <ul className="space-y-4 mb-8 flex-1">
-                      {pkg.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-3 text-gray-300">
-                          <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {feature}
-                        </li>
+          {loading ? (
+            <div className="text-center text-gray-400 py-10">Đang tải...</div>
+          ) : (
+            <>
+              {/* Watch History */}
+              {activeTab === 'history' && (
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-6">Đang xem dở</h2>
+                  {history.length === 0 ? (
+                    <p className="text-gray-500">Chưa có lịch sử xem phim.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {history.map(item => (
+                        <Link key={item.episodeId} to={`/watch/${item.movieId}?episode=${item.episodeId}`} className="group bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-gray-600 transition-colors">
+                          <div className="relative aspect-video">
+                            <img src={item.movieCoverImg || "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=400&auto=format&fit=crop"} alt={item.movieTitle} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center bg-black/50">
+                                <Play className="w-6 h-6 fill-white ml-1" />
+                              </div>
+                            </div>
+                            <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
+                              <div className="h-full bg-brand-red" style={{ width: `50%` }}></div>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h3 className="text-white font-medium mb-1 line-clamp-1">{item.movieTitle}</h3>
+                            <p className="text-sm text-gray-400">{item.episodeTitle || `Tập ${item.episodeNumber}`}</p>
+                          </div>
+                        </Link>
                       ))}
-                    </ul>
-                    <button className={`w-full py-3 rounded-lg font-bold transition-colors ${idx === 1 ? 'bg-brand-gold text-black hover:bg-yellow-400' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>
-                      Chọn Gói Này
-                    </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* My List */}
+              {activeTab === 'mylist' && (
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-6">Danh sách của tôi</h2>
+                  {favorites.length === 0 ? (
+                    <p className="text-gray-500">Danh sách yêu thích trống.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                      {favorites.map(item => (
+                        <Link key={item.movieId} to={`/movie/${item.movieId}`} className="group relative rounded-md overflow-hidden aspect-[2/3]">
+                          <img src={item.coverImg || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop"} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                            <h3 className="text-white font-medium text-sm line-clamp-2">{item.title}</h3>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* VIP Packages */}
+              {activeTab === 'vip' && (
+                <div>
+                  <div className="text-center max-w-2xl mx-auto mb-10">
+                    <h2 className="text-3xl font-bold text-white mb-4">Nâng cấp trải nghiệm điện ảnh</h2>
+                    <p className="text-gray-400">Chọn gói cước phù hợp với bạn để thưởng thức kho phim bản quyền, không quảng cáo với chất lượng lên đến 4K.</p>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    {vipPackages.map((pkg, idx) => (
+                      <div key={pkg.id} className={`rounded-2xl p-6 border ${idx === 1 ? 'bg-gradient-to-b from-brand-gold/20 to-gray-900 border-brand-gold' : 'bg-gray-900 border-gray-800'} flex flex-col`}>
+                        {idx === 1 && <span className="bg-brand-gold text-black text-xs font-bold px-3 py-1 rounded-full w-max mb-4">PHỔ BIẾN NHẤT</span>}
+                        <h3 className="text-2xl font-bold text-white mb-2">{pkg.packageName}</h3>
+                        <div className="mb-6 flex items-baseline gap-1">
+                          <span className="text-3xl font-black text-white">{pkg.price.toLocaleString('vi-VN')}đ</span>
+                          <span className="text-gray-400">/{pkg.durationMonths} Tháng</span>
+                        </div>
+                        <ul className="space-y-4 mb-8 flex-1">
+                          <li className="flex items-center gap-3 text-gray-300">
+                            <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Không quảng cáo
+                          </li>
+                          <li className="flex items-center gap-3 text-gray-300">
+                            <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Chất lượng {idx === 0 ? 'HD' : (idx === 1 ? 'Full HD' : '4K')}
+                          </li>
+                        </ul>
+                        <button className={`w-full py-3 rounded-lg font-bold transition-colors ${idx === 1 ? 'bg-brand-gold text-black hover:bg-yellow-400' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>
+                          Chọn Gói Này
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

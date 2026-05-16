@@ -4,51 +4,71 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import episodeService, { type CreateEpisodePayload, type EpisodeDetail } from '@/services/episodeService';
 
 interface EpisodeFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  episode?: any | null; // null means Add new
+  episode?: EpisodeDetail | null; // null means Add new
   movieId: number;
+  onSuccess?: () => void;
 }
 
-export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onClose, episode, movieId }) => {
+export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onClose, episode, movieId, onSuccess }) => {
   const isEditing = !!episode;
+  const [loading, setLoading] = useState(false);
   
-  const [formData, setFormData] = useState({
-    title: '',
+  const [formData, setFormData] = useState<CreateEpisodePayload>({
+    movieId: movieId,
+    episodeNumber: 1, // Default, you might want to auto-increment this
+    episodeTitle: '',
     duration: '',
-    video_url: '',
-    video_type: '2', // 1: Trailer, 2: Main Episode
+    videoType: 2, // 1: Trailer, 2: Main Episode
   });
 
   useEffect(() => {
-    if (episode) {
+    if (episode && isOpen) {
       setFormData({
-        title: episode.title || '',
+        movieId: episode.movieId || movieId,
+        episodeNumber: episode.episodeNumber || 1,
+        episodeTitle: episode.episodeTitle || '',
         duration: episode.duration || '',
-        video_url: episode.video_url || '',
-        video_type: episode.video_type?.toString() || '2',
+        videoType: episode.videoType || 2,
       });
-    } else {
+    } else if (isOpen) {
       setFormData({
-        title: '',
+        movieId: movieId,
+        episodeNumber: 1,
+        episodeTitle: '',
         duration: '',
-        video_url: '',
-        video_type: '2',
+        videoType: 2,
       });
     }
-  }, [episode, isOpen]);
+  }, [episode, isOpen, movieId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: name === 'episodeNumber' ? Number(value) : value }));
   };
 
-  const handleSave = () => {
-    console.log(`Saving episode for movie ${movieId}...`, formData);
-    // TODO: Call API
-    onClose();
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      if (isEditing && episode?.id) {
+        await episodeService.update(episode.id, formData);
+        alert("Cập nhật tập phim thành công!");
+      } else {
+        await episodeService.create(formData);
+        alert("Thêm tập phim mới thành công!");
+      }
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Đã có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,21 +79,21 @@ export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onCl
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="title" className="text-right text-gray-300">Tên tập</Label>
-            <Input id="title" name="title" value={formData.title} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" placeholder="VD: Tập 1: Bắt đầu" />
+            <Label htmlFor="episodeNumber" className="text-right text-gray-300">Tập số</Label>
+            <Input id="episodeNumber" name="episodeNumber" type="number" value={formData.episodeNumber} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="episodeTitle" className="text-right text-gray-300">Tên tập</Label>
+            <Input id="episodeTitle" name="episodeTitle" value={formData.episodeTitle} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" placeholder="VD: Tập 1: Bắt đầu" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="duration" className="text-right text-gray-300">Thời lượng</Label>
             <Input id="duration" name="duration" value={formData.duration} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" placeholder="VD: 45 phút" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="video_url" className="text-right text-gray-300">Link Video</Label>
-            <Input id="video_url" name="video_url" value={formData.video_url} onChange={handleChange} className="col-span-3 bg-gray-800 border-gray-700 text-white" placeholder="URL file MP4/M3U8..." />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="video_type" className="text-right text-gray-300">Loại Video</Label>
+            <Label htmlFor="videoType" className="text-right text-gray-300">Loại Video</Label>
             <div className="col-span-3">
-              <Select value={formData.video_type} onValueChange={(val) => setFormData(prev => ({ ...prev, video_type: val }))}>
+              <Select value={formData.videoType.toString()} onValueChange={(val) => setFormData(prev => ({ ...prev, videoType: Number(val) }))}>
                 <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
                   <SelectValue placeholder="Chọn loại video" />
                 </SelectTrigger>
@@ -86,8 +106,10 @@ export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onCl
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="bg-transparent border-gray-700 text-white hover:bg-gray-800">Hủy</Button>
-          <Button onClick={handleSave} className="bg-brand-red text-white hover:bg-red-700">Lưu thay đổi</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading} className="bg-transparent border-gray-700 text-white hover:bg-gray-800">Hủy</Button>
+          <Button onClick={handleSave} disabled={loading} className="bg-brand-red text-white hover:bg-red-700">
+            {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
