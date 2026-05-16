@@ -1,17 +1,18 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { AuthPage } from '@/pages/AuthPage'
-import { RegisterAdminPage } from '@/pages/RegisterAdminPage'
+import { AuthPage } from '@/pages/auth/AuthPage'
+import { RegisterAdminPage } from '@/pages/auth/RegisterAdminPage'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { MainLayout } from '@/layouts/MainLayout'
 import { DashboardPage } from '@/pages/admin/DashboardPage'
 import { MoviesManagementPage } from '@/pages/admin/MoviesManagementPage'
 import { EpisodesManagementPage } from '@/pages/admin/EpisodesManagementPage'
+import { AdminLoginPage } from '@/pages/admin/AdminLoginPage'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
-import { HomePage } from '@/pages/HomePage'
-import { MovieDetailPage } from '@/pages/MovieDetailPage'
-import { WatchPage } from '@/pages/WatchPage'
-import { ProfilePage } from '@/pages/ProfilePage'
+import { HomePage } from '@/pages/client/HomePage'
+import { MovieDetailPage } from '@/pages/client/MovieDetailPage'
+import { WatchPage } from '@/pages/client/WatchPage'
+import { ProfilePage } from '@/pages/client/ProfilePage'
 
 export const router = createBrowserRouter([
   { path: '/login',          element: <AuthPage /> },
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       // Other routes like /movies, /tv-shows will go here
     ]
   },
+  { path: '/admin/login',    element: <AdminLoginPage /> },
   {
     path: '/admin',
     element: <ProtectedRoute allowedRoles={['Admin']} />,
