@@ -1,4 +1,5 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/authStore';
 import { 
   LayoutDashboard, 
   Film, 
@@ -14,6 +15,14 @@ import {
 } from 'lucide-react';
 
 export const AdminLayout = () => {
+  const logout = useAuthStore(state => state.logout);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const navGroups = [
     {
       title: "Cơ bản",
@@ -58,7 +67,7 @@ export const AdminLayout = () => {
       <aside className="w-64 bg-gray-950 border-r border-gray-800 flex flex-col h-full">
         <div className="h-16 flex items-center px-6 border-b border-gray-800">
           <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-red-600">
-            CineMax Admin
+            CineFlix Admin
           </div>
         </div>
         
@@ -92,7 +101,10 @@ export const AdminLayout = () => {
         </div>
 
         <div className="p-4 border-t border-gray-800">
-          <button className="flex items-center gap-3 w-full px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             <span>Đăng xuất</span>
           </button>

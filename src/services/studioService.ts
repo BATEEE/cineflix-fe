@@ -1,21 +1,63 @@
 import axiosClient from '../api/axiosClient';
 
-export interface Studio {
+export interface StudioStatCard {
+  value: number;
+  change: string;
+  isPositive: boolean;
+}
+
+export interface StudioChartData {
+  name: string;
+  views: number;
+}
+
+export interface StudioTopMovie {
   id: number;
-  studioname: string;
-  country: string | null;
+  title: string;
+  views: number;
+  rating: number;
+}
+
+export interface StudioDashboardStats {
+  totalMovies: StudioStatCard;
+  totalViews: StudioStatCard;
+  avgRating: StudioStatCard;
+  chartData: StudioChartData[];
+  topMovies: StudioTopMovie[];
+}
+
+export interface StudioMovieListItem {
+  id: number;
+  title: string;
+  coverImg: string | null;
+  movieType: string;
+  episodeCount: number;
+  views: number;
+  isPremium: boolean;
+  isDeleted: boolean;
+  createdAt: string;
 }
 
 const studioService = {
-  getAll: async () => {
-    const response = await axiosClient.get('/api/studio');
-    return response.data.data as Studio[];
+  getDashboardStats: async () => {
+    const response = await axiosClient.get('/api/studio/dashboard/stats');
+    return response.data as StudioDashboardStats;
   },
 
-  create: async (name: string, country?: string) => {
-    const response = await axiosClient.post('/api/studio', { name, country });
+  getMovies: async () => {
+    const response = await axiosClient.get('/api/studio/movies');
+    return response.data as StudioMovieListItem[];
+  },
+
+  getComments: async () => {
+    const response = await axiosClient.get('/api/studio/comments');
     return response.data;
   },
+
+  updateSettings: async (payload: { studioName: string; country: string }) => {
+    const response = await axiosClient.put('/api/studio/settings', payload);
+    return response.data;
+  }
 };
 
 export default studioService;

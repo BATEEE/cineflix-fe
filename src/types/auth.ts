@@ -12,6 +12,15 @@ export interface RegisterPayload {
   avt?: string;
 }
 
+export interface RegisterStudioOwnerPayload {
+  username: string;
+  email: string;
+  password: string;
+  displayName: string;
+  studioName: string;
+  country: string;
+}
+
 export interface VerifyPayload {
   email: string;
   code: string;
