@@ -17,20 +17,22 @@ import {
   Area,
   AreaChart
 } from 'recharts';
+import adminService, { type DashboardStats } from '@/services/adminService';
 
 export const DashboardPage = () => {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:5063/api/admin/dashboard/stats')
-      .then(res => res.json())
-      .then(data => {
-        setData(data);
+    adminService.getDashboardStats()
+      .then(res => {
+        setData(res);
         setLoading(false);
       })
       .catch(err => {
         console.error("Failed to fetch dashboard data:", err);
+        setError("Không thể tải dữ liệu. Vui lòng kiểm tra quyền truy cập.");
         setLoading(false);
       });
   }, []);
@@ -39,8 +41,8 @@ export const DashboardPage = () => {
     return <div className="text-white p-8">Loading dashboard data...</div>;
   }
 
-  if (!data) {
-    return <div className="text-white p-8">Error loading data.</div>;
+  if (error || !data) {
+    return <div className="text-red-400 p-8">{error || "Error loading data."}</div>;
   }
 
   const { stats, chartData, topMovies } = data;

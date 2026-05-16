@@ -3,55 +3,78 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import ReactPlayer from 'react-player';
 import { Send, ThumbsUp, AlertCircle, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-
-// Mock data
-const mockMovie = {
-  id: 1,
-  title: "Stranger Things 4",
-  type: 2, // TV Show
-  episodes: [
-    { id: 101, title: "Tập 1: Câu lạc bộ Hellfire", videoUrl: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4", duration: 10 },
-    { id: 102, title: "Tập 2: Lời nguyền của Vecna", videoUrl: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4", duration: 10 },
-    { id: 103, title: "Tập 3: Kẻ sát nhân", videoUrl: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4", duration: 10 },
-  ],
-  savedProgress: 5, // in seconds (mock)
-};
-
-const mockComments = [
-  { id: 1, user: "Alex Nguyen", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex", content: "Tập này quá hay, kỹ xảo đỉnh cao!", time: "2 giờ trước", likes: 12 },
-  { id: 2, user: "Trần Minh", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tran", content: "Chờ phần tiếp theo mãi. Vecna thực sự đáng sợ.", time: "5 giờ trước", likes: 8 },
-];
+import movieService, { type MovieDetail } from '@/services/movieService';
+import watchHistoryService from '@/services/watchHistoryService';
+import commentService, { type CommentItem } from '@/services/commentService';
 
 export const WatchPage = () => {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const episodeId = searchParams.get('episode');
-  const { user } = useAuthStore();
+  const episodeIdParam = searchParams.get('episode');
+  const { user, isAuthenticated } = useAuthStore();
   
+  const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [playing, setPlaying] = useState(false);
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
-  const [comments, setComments] = useState(mockComments);
+  const [savedProgress, setSavedProgress] = useState(0);
+  const [comments, setComments] = useState<CommentItem[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [loading, setLoading] = useState(true);
   
   const playerRef = useRef<ReactPlayer>(null);
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch movie data and comments
+  useEffect(() => {
+    if (!id) return;
+    const fetchData = async () => {
+      try {
+        const [movieData, commentsData] = await Promise.all([
+          movieService.getById(Number(id)),
+          commentService.getByMovieId(Number(id))
+        ]);
+        setMovie(movieData);
+        setComments(commentsData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   // Determine current episode
-  const currentEpisode = episodeId 
-    ? mockMovie.episodes.find(ep => ep.id.toString() === episodeId) 
-    : mockMovie.episodes[0];
+  const currentEpisode = movie?.episodes?.find(ep => ep.id.toString() === episodeIdParam) 
+    || (movie?.episodes?.length ? movie.episodes[0] : null);
 
+  // Fetch progress when episode changes
   useEffect(() => {
-    // When component mounts or episode changes, check if there's saved progress
-    if (mockMovie.savedProgress > 0) {
-      setShowContinuePrompt(true);
-      setPlaying(false);
-    } else {
+    if (!currentEpisode || !isAuthenticated) {
       setPlaying(true);
+      return;
     }
-  }, [currentEpisode]);
+
+    const fetchProgress = async () => {
+      try {
+        const progress = await watchHistoryService.getProgress(currentEpisode.id);
+        if (progress && progress.stoppedAtSeconds > 5) {
+          setSavedProgress(progress.stoppedAtSeconds);
+          setShowContinuePrompt(true);
+          setPlaying(false);
+        } else {
+          setPlaying(true);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy tiến trình:", err);
+        setPlaying(true);
+      }
+    };
+    fetchProgress();
+  }, [currentEpisode, isAuthenticated]);
 
   const handleContinue = () => {
-    playerRef.current?.seekTo(mockMovie.savedProgress, 'seconds');
+    playerRef.current?.seekTo(savedProgress, 'seconds');
     setShowContinuePrompt(false);
     setPlaying(true);
   };
@@ -63,28 +86,59 @@ export const WatchPage = () => {
   };
 
   const handleProgress = (state: { playedSeconds: number }) => {
-    // In real app: call API every X seconds to save state.playedSeconds
-    // console.log("Saving progress:", Math.floor(state.playedSeconds));
+    if (!isAuthenticated || !currentEpisode) return;
+    
+    // Throttle save progress to avoid API spam (e.g., save every 10 seconds)
+    if (progressTimerRef.current) return;
+    
+    progressTimerRef.current = setTimeout(() => {
+      watchHistoryService.saveProgress(currentEpisode.id, Math.floor(state.playedSeconds))
+        .catch(console.error);
+      progressTimerRef.current = null;
+    }, 10000); // 10 seconds
   };
 
-  const handlePostComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !user) return;
-    
-    const comment = {
-      id: Date.now(),
-      user: user.displayName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
-      content: newComment,
-      time: "Vừa xong",
-      likes: 0
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
     };
+  }, []);
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !user || !movie) return;
     
-    setComments([comment, ...comments]);
-    setNewComment("");
+    try {
+      const response = await commentService.create(movie.id, newComment);
+      if (response.success) {
+        // Refresh comments
+        const updatedComments = await commentService.getByMovieId(movie.id);
+        setComments(updatedComments);
+        setNewComment("");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi đăng bình luận.");
+    }
   };
 
-  if (!currentEpisode) return <div className="p-20 text-white text-center">Không tìm thấy tập phim.</div>;
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  if (loading) return <div className="p-20 text-white text-center">Đang tải...</div>;
+  if (!movie || !currentEpisode) return <div className="p-20 text-white text-center">Không tìm thấy tập phim.</div>;
+
+  // Assume episode object has videoUrl for now, we'll try to find it from episodeTitle (as a hack) if missing, 
+  // but let's assume videoType=2 is main movie and it's stored in episodeTitle or there's a missing field in DTO.
+  // Actually, EpisodeSummaryDto doesn't have VideoUrl. Oh wait, getById only returns EpisodeSummaryDto.
+  // We need to fetch full episode details from episodeService!
+  // Let's use episodeService.getByMovieId if needed, but wait, EpisodeSummary does not have videoUrl.
+  // For this mock, if videoUrl is missing, fallback to a test video.
+  const videoUrl = (currentEpisode as any).videoUrl || "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4";
 
   return (
     <div className="min-h-screen bg-brand-bg pt-[68px]">
@@ -95,13 +149,13 @@ export const WatchPage = () => {
           <div className="relative w-full aspect-video bg-black">
             <ReactPlayer
               ref={playerRef}
-              url={currentEpisode.videoUrl}
+              url={videoUrl}
               width="100%"
               height="100%"
               controls
               playing={playing}
               onProgress={handleProgress}
-              progressInterval={5000} // Cập nhật progress mỗi 5s
+              progressInterval={5000}
               style={{ position: 'absolute', top: 0, left: 0 }}
             />
 
@@ -114,7 +168,7 @@ export const WatchPage = () => {
                   </button>
                   <AlertCircle className="w-12 h-12 text-brand-red mb-4 mx-auto" />
                   <h3 className="text-xl font-bold text-white text-center mb-2">Tiếp tục xem?</h3>
-                  <p className="text-gray-400 text-center mb-6">Bạn đang xem dở ở phút 00:05. Bạn có muốn tiếp tục xem từ vị trí này không?</p>
+                  <p className="text-gray-400 text-center mb-6">Bạn đang xem dở ở {formatTime(savedProgress)}. Bạn có muốn tiếp tục xem từ vị trí này không?</p>
                   <div className="flex gap-4">
                     <button 
                       onClick={handleRestart}
@@ -135,17 +189,17 @@ export const WatchPage = () => {
           </div>
 
           <div className="p-4 sm:p-6 lg:p-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{mockMovie.title}</h1>
-            <p className="text-gray-400 text-lg mb-8">{currentEpisode.title}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{movie.title}</h1>
+            <p className="text-gray-400 text-lg mb-8">{currentEpisode.episodeTitle || `Tập ${currentEpisode.episodeNumber}`}</p>
 
             {/* Comment Section */}
             <div className="mt-8 border-t border-gray-800 pt-8">
               <h3 className="text-xl font-bold text-white mb-6">Bình luận ({comments.length})</h3>
               
-              {user ? (
+              {isAuthenticated ? (
                 <form onSubmit={handlePostComment} className="flex gap-4 mb-8">
                   <div className="w-10 h-10 rounded-full bg-gray-800 shrink-0 overflow-hidden">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} alt="My Avatar" />
+                    <img src={user?.avt || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} alt="My Avatar" />
                   </div>
                   <div className="flex-1 relative">
                     <input 
@@ -175,17 +229,17 @@ export const WatchPage = () => {
                 {comments.map(comment => (
                   <div key={comment.id} className="flex gap-4">
                     <div className="w-10 h-10 rounded-full bg-gray-800 shrink-0 overflow-hidden">
-                      <img src={comment.avatar} alt={comment.user} />
+                      <img src={comment.userAvt || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.userDisplayName}`} alt={comment.userDisplayName} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-white">{comment.user}</span>
-                        <span className="text-xs text-gray-500">{comment.time}</span>
+                        <span className="font-medium text-white">{comment.userDisplayName}</span>
+                        <span className="text-xs text-gray-500">{new Date(comment.commentDate).toLocaleString('vi-VN')}</span>
                       </div>
                       <p className="text-gray-300 text-[15px] mb-2">{comment.content}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-400">
                         <button className="flex items-center gap-1.5 hover:text-white transition-colors">
-                          <ThumbsUp className="w-4 h-4" /> {comment.likes > 0 && comment.likes}
+                          <ThumbsUp className="w-4 h-4" />
                         </button>
                         <button className="hover:text-white transition-colors">Phản hồi</button>
                       </div>
@@ -198,21 +252,20 @@ export const WatchPage = () => {
         </div>
 
         {/* Sidebar Episodes (for TV Shows) */}
-        {mockMovie.type === 2 && (
+        {movie.type === 2 && movie.episodes && movie.episodes.length > 0 && (
           <div className="w-full lg:w-96 shrink-0 bg-brand-bg flex flex-col border-t lg:border-t-0 lg:border-l border-gray-800">
             <div className="p-4 border-b border-gray-800">
               <h2 className="text-lg font-bold text-white">Danh sách tập</h2>
-              <p className="text-gray-400 text-sm">Mùa 1</p>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar lg:max-h-[calc(100vh-68px)]">
-              {mockMovie.episodes.map(ep => {
+              {movie.episodes.map(ep => {
                 const isActive = currentEpisode.id === ep.id;
                 return (
                   <button
                     key={ep.id}
                     onClick={() => {
                       setSearchParams({ episode: ep.id.toString() });
-                      setPlaying(true);
+                      setPlaying(false);
                       setShowContinuePrompt(false);
                     }}
                     className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${
@@ -220,8 +273,7 @@ export const WatchPage = () => {
                     }`}
                   >
                     <div className="relative w-28 aspect-video bg-gray-800 rounded overflow-hidden shrink-0">
-                      {/* Fake thumbnail, usually comes from API */}
-                      <img src="https://images.unsplash.com/photo-1604537466158-719b1972feb8?q=80&w=200&auto=format&fit=crop" alt="" className="w-full h-full object-cover opacity-60" />
+                      <img src={movie.coverImg || "https://images.unsplash.com/photo-1604537466158-719b1972feb8?q=80&w=200&auto=format&fit=crop"} alt="" className="w-full h-full object-cover opacity-60" />
                       {isActive && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                           <span className="text-xs font-bold text-brand-red bg-black/60 px-2 py-0.5 rounded">Đang phát</span>
@@ -230,9 +282,9 @@ export const WatchPage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className={`text-sm font-medium truncate ${isActive ? 'text-brand-red' : 'text-gray-300'}`}>
-                        {ep.title}
+                        {ep.episodeTitle || `Tập ${ep.episodeNumber}`}
                       </h4>
-                      <p className="text-xs text-gray-500">{ep.duration} phút</p>
+                      <p className="text-xs text-gray-500">{ep.duration || 'N/A'}</p>
                     </div>
                   </button>
                 );

@@ -1,38 +1,61 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Film } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Film, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EpisodeFormModal } from './components/EpisodeFormModal';
-
-// Mock Data
-const mockMovies = [
-  { id: 1, title: 'Stranger Things 4', type: 2 },
-  { id: 2, title: 'Interstellar', type: 1 },
-  { id: 3, title: 'The Witcher', type: 2 },
-];
-
-const mockEpisodes = {
-  1: [
-    { id: 101, title: 'Tập 1: Câu lạc bộ Hellfire', duration: '1h 18m', video_type: 2, video_url: 'http://example.com/vid1.mp4' },
-    { id: 102, title: 'Tập 2: Lời nguyền của Vecna', duration: '1h 17m', video_type: 2, video_url: 'http://example.com/vid2.mp4' },
-    { id: 100, title: 'Trailer Chính thức', duration: '2m 30s', video_type: 1, video_url: 'http://youtube.com/watch?v=123' },
-  ],
-  2: [
-    { id: 201, title: 'Phim chính', duration: '2h 49m', video_type: 2, video_url: 'http://example.com/interstellar.mp4' },
-  ]
-};
+import movieService, { type MovieListItem } from '@/services/movieService';
+import episodeService, { type EpisodeDetail } from '@/services/episodeService';
 
 export const EpisodesManagementPage = () => {
   const [selectedMovieId, setSelectedMovieId] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEpisode, setEditingEpisode] = useState<any | null>(null);
+  const [editingEpisode, setEditingEpisode] = useState<EpisodeDetail | null>(null);
 
-  const episodes = selectedMovieId ? mockEpisodes[parseInt(selectedMovieId) as keyof typeof mockEpisodes] || [] : [];
-  const selectedMovie = mockMovies.find(m => m.id.toString() === selectedMovieId);
+  const [movies, setMovies] = useState<MovieListItem[]>([]);
+  const [episodes, setEpisodes] = useState<EpisodeDetail[]>([]);
+  const [loadingMovies, setLoadingMovies] = useState(true);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
 
-  const handleEdit = (episode: any) => {
+  useEffect(() => {
+    const fetchMovies = async () => {
+      setLoadingMovies(true);
+      try {
+        const data = await movieService.getAll();
+        setMovies(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingMovies(false);
+      }
+    };
+    fetchMovies();
+  }, []);
+
+  const fetchEpisodes = async (movieId: number) => {
+    setLoadingEpisodes(true);
+    try {
+      const data = await episodeService.getByMovieId(movieId);
+      setEpisodes(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingEpisodes(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedMovieId) {
+      fetchEpisodes(parseInt(selectedMovieId));
+    } else {
+      setEpisodes([]);
+    }
+  }, [selectedMovieId]);
+
+  const selectedMovie = movies.find(m => m.id.toString() === selectedMovieId);
+
+  const handleEdit = (episode: EpisodeDetail) => {
     setEditingEpisode(episode);
     setIsModalOpen(true);
   };
@@ -40,6 +63,23 @@ export const EpisodesManagementPage = () => {
   const handleAddNew = () => {
     setEditingEpisode(null);
     setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Bạn có chắc muốn xóa tập phim này?")) {
+      try {
+        await episodeService.delete(id);
+        if (selectedMovieId) fetchEpisodes(parseInt(selectedMovieId));
+      } catch (err) {
+        console.error(err);
+        alert("Lỗi khi xóa tập phim.");
+      }
+    }
+  };
+
+  const handleSaveSuccess = () => {
+    setIsModalOpen(false);
+    if (selectedMovieId) fetchEpisodes(parseInt(selectedMovieId));
   };
 
   return (
@@ -52,13 +92,13 @@ export const EpisodesManagementPage = () => {
         
         {/* Movie Selector */}
         <div className="w-full md:w-72">
-          <Select value={selectedMovieId} onValueChange={setSelectedMovieId}>
+          <Select value={selectedMovieId} onValueChange={setSelectedMovieId} disabled={loadingMovies}>
             <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white h-12">
               <Film className="w-4 h-4 mr-2 text-brand-red" />
-              <SelectValue placeholder="-- Chọn một bộ phim --" />
+              <SelectValue placeholder={loadingMovies ? "Đang tải..." : "-- Chọn một bộ phim --"} />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700 text-white">
-              {mockMovies.map(movie => (
+            <SelectContent className="bg-gray-800 border-gray-700 text-white max-h-[300px]">
+              {movies.map(movie => (
                 <SelectItem key={movie.id} value={movie.id.toString()}>{movie.title}</SelectItem>
               ))}
             </SelectContent>
@@ -75,8 +115,9 @@ export const EpisodesManagementPage = () => {
       ) : (
         <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
           <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50">
-            <h3 className="text-lg font-bold text-white">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
               Danh sách tập: <span className="text-brand-red">{selectedMovie?.title}</span>
+              {loadingEpisodes && <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />}
             </h3>
             <Button onClick={handleAddNew} className="bg-brand-red text-white hover:bg-red-700 flex items-center gap-2 border-none h-9">
               <Plus className="w-4 h-4" /> Thêm tập/trailer
@@ -88,45 +129,46 @@ export const EpisodesManagementPage = () => {
               <TableHeader className="bg-gray-800">
                 <TableRow className="border-gray-700 hover:bg-gray-800">
                   <TableHead className="text-gray-300">ID Tập</TableHead>
-                  <TableHead className="text-gray-300 min-w-[200px]">Tên tập</TableHead>
+                  <TableHead className="text-gray-300">Tên tập</TableHead>
                   <TableHead className="text-gray-300">Loại</TableHead>
                   <TableHead className="text-gray-300">Thời lượng</TableHead>
-                  <TableHead className="text-gray-300 max-w-[300px]">Link Video</TableHead>
                   <TableHead className="text-gray-300 text-right">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {episodes.map((ep) => (
-                  <TableRow key={ep.id} className="border-gray-800 hover:bg-gray-800/50">
-                    <TableCell className="font-medium text-white">#{ep.id}</TableCell>
-                    <TableCell className="font-medium text-white">{ep.title}</TableCell>
-                    <TableCell>
-                      {ep.video_type === 1 
-                        ? <Badge variant="outline" className="border-blue-500 text-blue-400">Trailer</Badge> 
-                        : <Badge variant="outline" className="border-green-500 text-green-400">Phim chính</Badge>}
-                    </TableCell>
-                    <TableCell className="text-gray-300">{ep.duration}</TableCell>
-                    <TableCell className="text-gray-400 text-sm truncate max-w-[300px] font-mono">
-                      {ep.video_url}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(ep)} className="text-gray-400 hover:text-white hover:bg-gray-700">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300 hover:bg-red-400/20">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {episodes.length === 0 && (
+                {loadingEpisodes ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                    <TableCell colSpan={5} className="text-center py-12 text-gray-500">Đang tải...</TableCell>
+                  </TableRow>
+                ) : episodes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12 text-gray-500">
                       Phim này chưa có tập nào. Nhấn "Thêm tập/trailer" để bắt đầu.
                     </TableCell>
                   </TableRow>
+                ) : (
+                  episodes.map((ep) => (
+                    <TableRow key={ep.id} className="border-gray-800 hover:bg-gray-800/50">
+                      <TableCell className="font-medium text-white">#{ep.id}</TableCell>
+                      <TableCell className="font-medium text-white">{ep.episodeTitle || `Tập ${ep.episodeNumber}`}</TableCell>
+                      <TableCell>
+                        {ep.videoType === 1 
+                          ? <Badge variant="outline" className="border-blue-500 text-blue-400">Trailer</Badge> 
+                          : <Badge variant="outline" className="border-green-500 text-green-400">Phim chính</Badge>}
+                      </TableCell>
+                      <TableCell className="text-gray-300">{ep.duration || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(ep)} className="text-gray-400 hover:text-white hover:bg-gray-700">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(ep.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/20">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
@@ -140,6 +182,7 @@ export const EpisodesManagementPage = () => {
           onClose={() => setIsModalOpen(false)} 
           episode={editingEpisode}
           movieId={parseInt(selectedMovieId)}
+          onSuccess={handleSaveSuccess}
         />
       )}
     </div>

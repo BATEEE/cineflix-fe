@@ -80,36 +80,32 @@ export const RegisterAdminPage = () => {
   const onSubmit = async (data: FormData) => {
     setResult(null)
     try {
-      const res = await fetch('http://localhost:5063/api/auth/register-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username:    data.username,
-          displayName: data.displayName,
-          email:       data.email,
-          password:    data.password,
-        }),
+      const { default: authService } = await import('@/services/authService')
+      const response = await authService.registerAdmin({
+        username:    data.username,
+        displayName: data.displayName,
+        email:       data.email,
+        password:    data.password,
       })
 
-      const json = await res.json()
-
-      if (res.ok || res.status === 201) {
+      if (response.success) {
         setResult({
           type: 'success',
-          message: `✅ Tạo tài khoản Admin thành công! ID: ${json.id}`,
-          data: json,
+          message: `✅ Tạo tài khoản Admin thành công!`,
+          data: response as any,
         })
         reset()
       } else {
         setResult({
           type: 'error',
-          message: json.message ?? `Lỗi ${res.status}: ${res.statusText}`,
+          message: response.message ?? 'Lỗi không xác định',
         })
       }
-    } catch (err) {
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Không kết nối được backend. Hãy chắc chắn server đang chạy.'
       setResult({
         type: 'error',
-        message: 'Không kết nối được backend. Hãy chắc chắn server đang chạy.',
+        message: typeof msg === 'string' ? msg : 'Lỗi hệ thống.',
       })
     }
   }
