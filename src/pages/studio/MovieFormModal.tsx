@@ -4,10 +4,11 @@ import genreService, { type Genre } from '@/services/genreService';
 import personService, { type Person } from '@/services/personService';
 import studioService, { type CreateStudioMoviePayload } from '@/services/studioService';
 
-interface CreateMovieModalProps {
+interface MovieFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  movieId?: number | null;
 }
 
 interface CastMember {
@@ -15,7 +16,7 @@ interface CastMember {
   roleName: string;
 }
 
-export const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const MovieFormModal: React.FC<MovieFormModalProps> = ({ isOpen, onClose, onSuccess, movieId }) => {
   // Form States
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -36,19 +37,46 @@ export const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onCl
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      Promise.all([genreService.getAll(), personService.getAll()])
-        .then(([genreRes, personRes]) => {
+      setError(null);
+      
+      Promise.all([
+        genreService.getAll(),
+        personService.getAll(),
+        movieId ? studioService.getMovieById(movieId) : Promise.resolve(null)
+      ])
+        .then(([genreRes, personRes, movieDetail]) => {
           setGenres(genreRes || []);
           setPersons(personRes || []);
+          
+          if (movieDetail) {
+            setTitle(movieDetail.title || '');
+            setDescription(movieDetail.description || '');
+            setReleaseDate(movieDetail.releaseDate ? movieDetail.releaseDate.split('T')[0] : '');
+            setType(movieDetail.type || 1);
+            setCoverImg(movieDetail.coverImg || '');
+            setIsPremium(movieDetail.isPremium || false);
+            setSelectedGenres(movieDetail.genreIds || []);
+            setCast(movieDetail.cast || []);
+          } else {
+            // Reset form for creating
+            setTitle('');
+            setDescription('');
+            setReleaseDate(new Date().toISOString().split('T')[0]);
+            setType(1);
+            setCoverImg('');
+            setIsPremium(false);
+            setSelectedGenres([]);
+            setCast([]);
+          }
           setLoading(false);
         })
         .catch((err) => {
           console.error(err);
-          setError("Không thể tải danh sách thể loại hoặc diễn viên.");
+          setError("Không thể tải danh sách thể loại, diễn viên hoặc thông tin phim.");
           setLoading(false);
         });
     }
-  }, [isOpen]);
+  }, [isOpen, movieId]);
 
   if (!isOpen) return null;
 
@@ -100,21 +128,18 @@ export const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onCl
     };
 
     try {
-      const res = await studioService.createMovie(payload);
+      let res;
+      if (movieId) {
+        res = await studioService.updateMovie(movieId, payload);
+      } else {
+        res = await studioService.createMovie(payload);
+      }
+
       if (res.success) {
         onSuccess();
-        // Reset form
-        setTitle('');
-        setDescription('');
-        setReleaseDate(new Date().toISOString().split('T')[0]);
-        setType(1);
-        setCoverImg('');
-        setIsPremium(false);
-        setSelectedGenres([]);
-        setCast([]);
         onClose();
       } else {
-        setError(res.message || "Đã xảy ra lỗi khi tạo phim.");
+        setError(res.message || "Đã xảy ra lỗi khi lưu phim.");
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Đã xảy ra lỗi hệ thống.");
@@ -133,8 +158,12 @@ export const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onCl
               <Clapperboard className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Đăng phim mới</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">Thêm tác phẩm điện ảnh mới vào hệ thống phát sóng của bạn</p>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                {movieId ? "Chỉnh sửa thông tin phim" : "Đăng phim mới"}
+              </h2>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                {movieId ? "Cập nhật các thông tin của tác phẩm điện ảnh" : "Thêm tác phẩm điện ảnh mới vào hệ thống phát sóng của bạn"}
+              </p>
             </div>
           </div>
           <button 
@@ -157,7 +186,7 @@ export const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onCl
           {loading ? (
             <div className="flex flex-col items-center justify-center h-64 text-zinc-500 gap-2">
               <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-sm mt-2">Đang tải dữ liệu cấu hình...</p>
+              <p className="text-sm mt-2">Đang tải dữ liệu phim...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -362,7 +391,7 @@ export const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onCl
                 <span>Đang xử lý...</span>
               </>
             ) : (
-              <span>Lưu và Đăng</span>
+              <span>{movieId ? "Lưu thay đổi" : "Lưu và Đăng"}</span>
             )}
           </button>
         </div>

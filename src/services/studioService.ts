@@ -73,6 +73,36 @@ const studioService = {
   createMovie: async (payload: CreateStudioMoviePayload) => {
     const response = await axiosClient.post('/api/studio/movies', payload);
     return response.data;
+  },
+
+  getMovieById: async (movieId: number) => {
+    const response = await axiosClient.get(`/api/studio/movies/${movieId}`);
+    return response.data as CreateStudioMoviePayload & { id: number };
+  },
+
+  updateMovie: async (movieId: number, payload: CreateStudioMoviePayload) => {
+    const response = await axiosClient.put(`/api/studio/movies/${movieId}`, payload);
+    return response.data;
+  },
+
+  getEpisodes: async (movieId: number) => {
+    const response = await axiosClient.get(`/api/studio/movies/${movieId}/episodes`);
+    return response.data as import('./episodeService').Episode[];
+  },
+
+  createEpisode: async (movieId: number, payload: Omit<import('./episodeService').CreateEpisodePayload, 'movieId'>) => {
+    const response = await axiosClient.post(`/api/studio/movies/${movieId}/episodes`, payload);
+    return response.data;
+  },
+
+  updateEpisode: async (episodeId: number, payload: Omit<import('./episodeService').CreateEpisodePayload, 'movieId'>) => {
+    const response = await axiosClient.put(`/api/studio/episodes/${episodeId}`, payload);
+    return response.data;
+  },
+
+  deleteEpisode: async (episodeId: number) => {
+    const response = await axiosClient.delete(`/api/studio/episodes/${episodeId}`);
+    return response.data;
   }
 };
 

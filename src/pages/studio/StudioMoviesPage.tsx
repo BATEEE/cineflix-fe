@@ -1,25 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Plus, 
   Search, 
-  Filter, 
-  MoreVertical, 
+  Filter,
   Eye, 
   Edit, 
   Trash2, 
-  Lock, 
-  Unlock,
   Clapperboard,
   ChevronRight,
-  Film
+  Film,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import studioService, { type StudioMovieListItem } from '@/services/studioService';
-import { CreateMovieModal } from './CreateMovieModal';
+import { MovieFormModal } from './MovieFormModal';
+import { EpisodeManagementModal } from './EpisodeManagementModal';
 
 export const StudioMoviesPage = () => {
   const [movies, setMovies] = useState<StudioMovieListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null);
+  const [selectedMovieTitle, setSelectedMovieTitle] = useState<string>('');
+  const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
 
   const fetchMovies = () => {
     setLoading(true);
@@ -43,7 +46,10 @@ export const StudioMoviesPage = () => {
           <p className="text-zinc-500 text-sm mt-1">Danh sách phim và các video đã đăng tải của bạn</p>
         </div>
         <button 
-          onClick={() => setIsCreateOpen(true)}
+          onClick={() => {
+            setSelectedMovieId(null);
+            setIsCreateOpen(true);
+          }}
           className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg shadow-red-600/20 active:scale-95"
         >
           <Plus className="w-5 h-5" />
@@ -141,10 +147,25 @@ export const StudioMoviesPage = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button title="Chỉnh sửa" className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all">
+                      <button 
+                        onClick={() => {
+                          setSelectedMovieId(movie.id);
+                          setIsCreateOpen(true);
+                        }}
+                        title="Chỉnh sửa" 
+                        className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button title="Quản lý tập phim" className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all">
+                      <button 
+                        onClick={() => {
+                          setSelectedMovieId(movie.id);
+                          setSelectedMovieTitle(movie.title);
+                          setIsEpisodeModalOpen(true);
+                        }}
+                        title="Quản lý tập phim" 
+                        className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                      >
                         <ChevronRight className="w-4 h-4" />
                       </button>
                       <button title="Xóa" className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all">
@@ -158,10 +179,25 @@ export const StudioMoviesPage = () => {
           </tbody>
         </table>
       </div>
-      <CreateMovieModal 
+      <MovieFormModal 
         isOpen={isCreateOpen} 
-        onClose={() => setIsCreateOpen(false)} 
+        movieId={selectedMovieId}
+        onClose={() => {
+          setIsCreateOpen(false);
+          setSelectedMovieId(null);
+        }} 
         onSuccess={fetchMovies} 
+      />
+      <EpisodeManagementModal
+        isOpen={isEpisodeModalOpen}
+        movieId={selectedMovieId}
+        movieTitle={selectedMovieTitle}
+        onClose={() => {
+          setIsEpisodeModalOpen(false);
+          setSelectedMovieId(null);
+          setSelectedMovieTitle('');
+          fetchMovies(); // Refresh to update episodeCount
+        }}
       />
     </div>
   );
