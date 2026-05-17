@@ -38,6 +38,17 @@ export interface StudioMovieListItem {
   createdAt: string;
 }
 
+export interface CreateStudioMoviePayload {
+  title: string;
+  description: string;
+  releaseDate: string; // ISO date string (YYYY-MM-DD)
+  type: number; // 1 = Phim Lẻ, 2 = Phim Bộ
+  coverImg: string | null;
+  isPremium: boolean;
+  genreIds: number[];
+  cast: { personId: number; roleName: string }[];
+}
+
 const studioService = {
   getDashboardStats: async () => {
     const response = await axiosClient.get('/api/studio/dashboard/stats');
@@ -56,6 +67,11 @@ const studioService = {
 
   updateSettings: async (payload: { studioName: string; country: string }) => {
     const response = await axiosClient.put('/api/studio/settings', payload);
+    return response.data;
+  },
+
+  createMovie: async (payload: CreateStudioMoviePayload) => {
+    const response = await axiosClient.post('/api/studio/movies', payload);
     return response.data;
   }
 };

@@ -10,21 +10,29 @@ import {
   Lock, 
   Unlock,
   Clapperboard,
-  ChevronRight
+  ChevronRight,
+  Film
 } from 'lucide-react';
 import studioService, { type StudioMovieListItem } from '@/services/studioService';
+import { CreateMovieModal } from './CreateMovieModal';
 
 export const StudioMoviesPage = () => {
   const [movies, setMovies] = useState<StudioMovieListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchMovies = () => {
+    setLoading(true);
     studioService.getMovies()
       .then(res => {
-        setMovies(res);
+        setMovies(res || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchMovies();
   }, []);
 
   return (
@@ -34,7 +42,10 @@ export const StudioMoviesPage = () => {
           <h1 className="text-2xl font-bold text-white tracking-tight">Quản lý Nội dung</h1>
           <p className="text-zinc-500 text-sm mt-1">Danh sách phim và các video đã đăng tải của bạn</p>
         </div>
-        <button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg shadow-red-600/20 active:scale-95">
+        <button 
+          onClick={() => setIsCreateOpen(true)}
+          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg shadow-red-600/20 active:scale-95"
+        >
           <Plus className="w-5 h-5" />
           <span>Đăng phim mới</span>
         </button>
@@ -147,6 +158,11 @@ export const StudioMoviesPage = () => {
           </tbody>
         </table>
       </div>
+      <CreateMovieModal 
+        isOpen={isCreateOpen} 
+        onClose={() => setIsCreateOpen(false)} 
+        onSuccess={fetchMovies} 
+      />
     </div>
   );
 };
