@@ -54,6 +54,11 @@ const movieService = {
     return response.data.data as MovieListItem[];
   },
 
+  getLatest: async () => {
+    const response = await axiosClient.get('/api/movie/latest');
+    return response.data.data as MovieListItem[];
+  },
+
   getById: async (id: number) => {
     const response = await axiosClient.get(`/api/movie/${id}`);
     return response.data.data as MovieDetail;

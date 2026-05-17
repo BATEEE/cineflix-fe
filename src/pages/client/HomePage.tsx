@@ -7,12 +7,16 @@ import { useAuthStore } from '@/stores/authStore';
 
 export const HomePage = () => {
   const [movies, setMovies] = useState<MovieListItem[]>([]);
+  const [latestMovies, setLatestMovies] = useState<MovieListItem[]>([]);
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     // Fetch tất cả phim
     movieService.getAll().then(setMovies).catch(console.error);
+
+    // Fetch top 10 phim mới nhất
+    movieService.getLatest().then(setLatestMovies).catch(console.error);
 
     // Fetch lịch sử xem nếu đã đăng nhập
     if (isAuthenticated) {
@@ -28,7 +32,7 @@ export const HomePage = () => {
     isPremium: m.isPremium
   });
 
-  const rowMovies = movies.map(mapToRowItem);
+  const latestMoviesRow = latestMovies.map(mapToRowItem);
   const premiumMovies = movies.filter(m => m.isPremium).map(mapToRowItem);
 
   const historyMovies = history.map(h => ({
@@ -48,7 +52,7 @@ export const HomePage = () => {
         {isAuthenticated && historyMovies.length > 0 && (
           <MovieRow title="Đang xem dở" movies={historyMovies} isContinueWatching={true} />
         )}
-        <MovieRow title="Phim Mới Cập Nhật" movies={rowMovies} />
+        <MovieRow title="Phim Mới Cập Nhật" movies={latestMoviesRow} />
         <MovieRow title="Phim Độc Quyền 👑" movies={premiumMovies} />
       </div>
     </div>
