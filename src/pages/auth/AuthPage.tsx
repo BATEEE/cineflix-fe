@@ -368,7 +368,7 @@ export const AuthPage = () => {
         )}
 
         {/* Footer Toggle */}
-        <div className="mt-12 sm:mt-10 text-zinc-400 text-[15px]">
+        <div className="mt-12 sm:mt-10 text-zinc-400 text-[15px] text-center">
           {step === 'login' ? (
             <p>
               Bạn mới tham gia Cineflix?{' '}
