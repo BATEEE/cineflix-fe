@@ -167,6 +167,79 @@ export const MovieDetailPage = () => {
             </div>
           </section>
 
+          {/* Đối với Phim Lẻ (movieDetail.type === 1) */}
+          {movieDetail.type === 1 && movieDetail.episodes?.length > 0 && (
+            <section className="space-y-8">
+              <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-brand-red pl-3">Nội dung & Video liên quan</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Cột 1: Trailer & Teaser */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-zinc-300 flex items-center gap-2 border-b border-zinc-800 pb-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-brand-red animate-pulse" />
+                    Trailer & Teaser
+                  </h4>
+                  {movieDetail.episodes.filter(ep => ep.videoType === 2).length === 0 ? (
+                    <p className="text-sm text-zinc-500 italic py-4">Chưa có Trailer/Teaser nào cho phim này.</p>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {movieDetail.episodes.filter(ep => ep.videoType === 2).map(ep => (
+                        <Link 
+                          key={ep.id} 
+                          to={`/watch/${movieDetail.id}?episode=${ep.id}`}
+                          className="flex gap-3 bg-white/5 hover:bg-white/10 rounded-lg p-2.5 transition-colors group"
+                        >
+                          <div className="w-28 aspect-video rounded overflow-hidden relative shrink-0">
+                            <img src={movieDetail.coverImg || 'https://images.unsplash.com/photo-1604537466158-719b1972feb8?q=80&w=1000&auto=format&fit=crop'} alt={ep.episodeTitle || 'Trailer'} className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                              <Play className="w-3.5 h-3.5 fill-white text-white ml-0.5" />
+                            </div>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <h5 className="text-white font-medium text-sm line-clamp-1 group-hover:text-brand-red transition-colors">{ep.episodeTitle || "Trailer chính thức"}</h5>
+                            <span className="text-zinc-500 text-xs mt-1">{ep.duration || 'N/A'}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cột 2: Tập Phim Chính Thức */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-zinc-300 flex items-center gap-2 border-b border-zinc-800 pb-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                    Tập Phim Chính Thức
+                  </h4>
+                  {movieDetail.episodes.filter(ep => ep.videoType === 1).length === 0 ? (
+                    <p className="text-sm text-zinc-500 italic py-4">Chưa có tập phim chính thức nào được đăng tải.</p>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {movieDetail.episodes.filter(ep => ep.videoType === 1).map(ep => (
+                        <Link 
+                          key={ep.id} 
+                          to={`/watch/${movieDetail.id}?episode=${ep.id}`}
+                          className="flex gap-3 bg-white/5 hover:bg-white/10 rounded-lg p-2.5 transition-colors group border border-transparent hover:border-green-500/20"
+                        >
+                          <div className="w-28 aspect-video rounded overflow-hidden relative shrink-0">
+                            <img src={movieDetail.coverImg || 'https://images.unsplash.com/photo-1604537466158-719b1972feb8?q=80&w=1000&auto=format&fit=crop'} alt={ep.episodeTitle || 'Tập chính thức'} className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                              <Play className="w-3.5 h-3.5 fill-white text-white ml-0.5" />
+                            </div>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <h5 className="text-white font-medium text-sm line-clamp-1 group-hover:text-green-400 transition-colors">{ep.episodeTitle || `Tập ${ep.episodeNumber}`}</h5>
+                            <span className="text-zinc-500 text-xs mt-1">{ep.duration || 'N/A'}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Episodes List (if TV Show) */}
           {movieDetail.type === 2 && movieDetail.episodes?.length > 0 && (
             <section>

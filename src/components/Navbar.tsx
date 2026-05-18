@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { Film, Search, Bell, User, Settings, LogOut, Heart, Clock } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 
 export const Navbar = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user, logout, isAuthenticated } = useAuthStore();
+
+  const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   // Handle scroll effect for navbar background
   React.useEffect(() => {
@@ -67,9 +76,30 @@ export const Navbar = () => {
         {/* Right Section: Actions & Profile */}
         <div className="flex flex-1 items-center justify-end gap-6">
           {/* Search Icon */}
-          <button className="text-gray-300 hover:text-white transition-colors">
-            <Search className="w-5 h-5" />
-          </button>
+          {isSearchOpen ? (
+            <div className="relative flex items-center">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Tìm tên phim..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchSubmit}
+                autoFocus
+                onBlur={() => {
+                  if (!searchQuery) setIsSearchOpen(false);
+                }}
+                className="bg-black/60 text-white placeholder-gray-500 text-xs pl-9 pr-4 py-1.5 rounded-full border border-zinc-700/80 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red transition-all duration-300 w-40 sm:w-48 md:w-56"
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="text-gray-300 hover:text-white transition-colors"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          )}
 
           {/* VIP Button */}
           <Link

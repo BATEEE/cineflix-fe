@@ -17,6 +17,7 @@ import { HomePage } from '@/pages/client/HomePage'
 import { MovieDetailPage } from '@/pages/client/MovieDetailPage'
 import { WatchPage } from '@/pages/client/WatchPage'
 import { ProfilePage } from '@/pages/client/ProfilePage'
+import { SearchPage } from '@/pages/client/SearchPage'
 
 export const router = createBrowserRouter([
   { path: '/login',          element: <AuthPage /> },
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
       { path: 'movie/:id', element: <MovieDetailPage /> },
       { path: 'watch/:id', element: <WatchPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'search', element: <SearchPage /> },
       // Other routes like /movies, /tv-shows will go here
     ]
   },
