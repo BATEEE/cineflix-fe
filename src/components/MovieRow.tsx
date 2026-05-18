@@ -15,6 +15,7 @@ interface Movie {
   posterPath: string;
   isPremium?: boolean;
   progress?: number; // for "continue watching"
+  targetUrl?: string; // custom redirect link
 }
 
 interface MovieRowProps {
@@ -47,7 +48,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({ title, movies, isContinueWat
         {movies.map((movie) => (
           <SwiperSlide key={movie.id}>
             <div className="relative group rounded-md overflow-hidden bg-gray-900 transition-transform duration-300 hover:scale-105 hover:z-20">
-              <Link to={`/movie/${movie.id}`} className="block w-full h-full aspect-[2/3] relative">
+              <Link to={movie.targetUrl || `/movie/${movie.id}`} className="block w-full h-full aspect-[2/3] relative">
                 <img
                   src={movie.posterPath}
                   alt={movie.title}

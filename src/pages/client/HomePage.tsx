@@ -35,12 +35,26 @@ export const HomePage = () => {
   const latestMoviesRow = latestMovies.map(mapToRowItem);
   const premiumMovies = movies.filter(m => m.isPremium).map(mapToRowItem);
 
-  const historyMovies = history.map(h => ({
+  // Group history theo movieId, chỉ giữ lại tập mới nhất được xem (dựa trên lastWatchedAt)
+  const groupedHistory = history.reduce<Record<number, WatchHistoryItem>>((acc, item) => {
+    const existing = acc[item.movieId];
+    if (!existing || new Date(item.lastWatchedAt) > new Date(existing.lastWatchedAt)) {
+      acc[item.movieId] = item;
+    }
+    return acc;
+  }, {});
+
+  const latestHistoryItems = Object.values(groupedHistory).sort((a, b) => 
+    new Date(b.lastWatchedAt).getTime() - new Date(a.lastWatchedAt).getTime()
+  );
+
+  const historyMovies = latestHistoryItems.map(h => ({
     id: h.movieId,
-    title: h.movieTitle,
+    title: h.episodeTitle ? `${h.movieTitle} - ${h.episodeTitle}` : `${h.movieTitle} - Tập ${h.episodeNumber}`,
     posterPath: h.movieCoverImg || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000&auto=format&fit=crop',
-    isPremium: false, // History không care premium label lắm vì đã xem được rồi
-    progress: h.stoppedAtSeconds > 0 ? 50 : 0 // Tạm thời để 50% nếu đã xem
+    isPremium: false,
+    progress: 60, // Hiển thị progress bar xem dở
+    targetUrl: `/watch/${h.movieId}?episode=${h.episodeId}` // Chuyển hướng trực tiếp đến tập đang xem
   }));
 
   return (

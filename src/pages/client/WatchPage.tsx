@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import ReactPlayer from 'react-player';
 import { Send, ThumbsUp, AlertCircle, X } from 'lucide-react';
+import { VideoPlayer } from '@/components/VideoPlayer';
 import { useAuthStore } from '@/stores/authStore';
 import movieService, { type MovieDetail } from '@/services/movieService';
 import watchHistoryService from '@/services/watchHistoryService';
@@ -21,8 +21,12 @@ export const WatchPage = () => {
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   
-  const playerRef = useRef<ReactPlayer>(null);
+  // v3: ref nhận HTMLVideoElement trực tiếp
+  const playerRef = useRef<HTMLVideoElement | null>(null);
+  const setPlayerRef = useCallback((el: HTMLVideoElement) => { playerRef.current = el; }, []);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasLoggedViewRef = useRef<boolean>(false);
+  const lastPrintedTimeRef = useRef<number>(0);
 
   // Fetch movie data and comments
   useEffect(() => {
@@ -73,29 +77,50 @@ export const WatchPage = () => {
     fetchProgress();
   }, [currentEpisode, isAuthenticated]);
 
+  // Reset trạng thái log view khi đổi tập phim
+  useEffect(() => {
+    hasLoggedViewRef.current = false;
+    lastPrintedTimeRef.current = 0;
+  }, [currentEpisode?.id]);
+
   const handleContinue = () => {
-    playerRef.current?.seekTo(savedProgress, 'seconds');
+    // v3: dùng HTMLVideoElement.currentTime thay cho seekTo()
+    if (playerRef.current) playerRef.current.currentTime = savedProgress;
     setShowContinuePrompt(false);
-    setPlaying(true);
   };
 
   const handleRestart = () => {
-    playerRef.current?.seekTo(0);
+    if (playerRef.current) playerRef.current.currentTime = 0;
     setShowContinuePrompt(false);
-    setPlaying(true);
   };
 
-  const handleProgress = (state: { playedSeconds: number }) => {
-    if (!isAuthenticated || !currentEpisode) return;
-    
-    // Throttle save progress to avoid API spam (e.g., save every 10 seconds)
+  // v3: onTimeUpdate thay cho onProgress — nhận SyntheticEvent<HTMLVideoElement>
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (!currentEpisode) return;
+    const currentTime = e.currentTarget.currentTime;
+
+    // Chỉ ghi nhận view khi xem tối thiểu 10s và chưa được log cho tập này
+    if (currentTime >= 10 && !hasLoggedViewRef.current) {
+      hasLoggedViewRef.current = true;
+      watchHistoryService.logView(movie?.id || 0, currentEpisode.id)
+        .catch(err => console.error("Lỗi ghi nhận view_logs:", err));
+    }
+
+    // In ra console thời gian đã xem mỗi 0.5s
+    if (Math.abs(currentTime - lastPrintedTimeRef.current) >= 0.5) {
+      console.log(`[Cineflix Player] Thời gian phát: ${currentTime.toFixed(1)}s / Yêu cầu tính view: 10s`);
+      lastPrintedTimeRef.current = currentTime;
+    }
+
+    if (!isAuthenticated) return;
+
+    // Throttle save progress mỗi 10 giây
     if (progressTimerRef.current) return;
-    
     progressTimerRef.current = setTimeout(() => {
-      watchHistoryService.saveProgress(currentEpisode.id, Math.floor(state.playedSeconds))
+      watchHistoryService.saveProgress(currentEpisode.id, Math.floor(currentTime))
         .catch(console.error);
       progressTimerRef.current = null;
-    }, 10000); // 10 seconds
+    }, 10000);
   };
 
   // Cleanup timer on unmount
@@ -146,17 +171,11 @@ export const WatchPage = () => {
         
         {/* Main Player Area */}
         <div className="flex-1 lg:border-r border-gray-800">
-          <div className="relative w-full aspect-video bg-black">
-            <ReactPlayer
-              ref={playerRef}
-              url={videoUrl}
-              width="100%"
-              height="100%"
-              controls
-              playing={playing}
-              onProgress={handleProgress}
-              progressInterval={5000}
-              style={{ position: 'absolute', top: 0, left: 0 }}
+          <div className="relative">
+            <VideoPlayer
+              playerRef={setPlayerRef}
+              videoUrl={videoUrl}
+              onTimeUpdate={handleTimeUpdate}
             />
 
             {/* Continue Watching Prompt Overlay */}

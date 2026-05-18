@@ -27,6 +27,15 @@ const watchHistoryService = {
     const response = await axiosClient.post('/api/watchhistory', { episodeId, stoppedAtSeconds });
     return response.data;
   },
+
+  /**
+   * Ghi 1 lượt xem vào view_logs và tăng totalviews của movie.
+   * Gọi 1 lần duy nhất khi bắt đầu xem — cả khách vãng lai cũng được tính.
+   */
+  logView: async (movieId: number, episodeId: number | null) => {
+    const response = await axiosClient.post('/api/watchhistory/view', { movieId, episodeId });
+    return response.data;
+  },
 };
 
 export default watchHistoryService;

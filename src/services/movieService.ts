@@ -29,6 +29,7 @@ export interface EpisodeSummary {
   episodeTitle: string | null;
   duration: string | null;
   videoType: number;
+  videoUrl: string | null;
 }
 
 export interface MovieDetail extends MovieListItem {
