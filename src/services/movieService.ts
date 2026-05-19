@@ -49,6 +49,39 @@ export interface CreateMoviePayload {
   genreIds: number[];
 }
 
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  pageIndex: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface ExploreParams {
+  search?: string;
+  type?: number;
+  genreId?: number;
+  country?: string;
+  year?: number;
+  sortBy?: string;
+  isPremium?: boolean;
+  pageIndex?: number;
+  pageSize?: number;
+}
+
+export const cleanParams = <T extends Record<string, any>>(params: T): Partial<T> => {
+  const cleaned: Partial<T> = {};
+  for (const key in params) {
+    const val = params[key];
+    if (val !== null && val !== undefined && val !== '') {
+      cleaned[key] = val;
+    }
+  }
+  return cleaned;
+};
+
 const movieService = {
   getAll: async (params?: { search?: string; type?: number; genreId?: number; isPremium?: boolean }) => {
     const response = await axiosClient.get('/api/movie', { params });
@@ -63,6 +96,17 @@ const movieService = {
   getTrending: async (type?: number) => {
     const response = await axiosClient.get('/api/movie/trending', { params: { type } });
     return response.data.data as MovieListItem[];
+  },
+
+  getExplore: async (params?: ExploreParams) => {
+    const cleaned = params ? cleanParams(params) : undefined;
+    const response = await axiosClient.get('/api/movie/explore', { params: cleaned });
+    return response.data.data as PagedResult<MovieListItem>;
+  },
+
+  getCountries: async () => {
+    const response = await axiosClient.get('/api/movie/countries');
+    return response.data.data as string[];
   },
 
   getById: async (id: number) => {

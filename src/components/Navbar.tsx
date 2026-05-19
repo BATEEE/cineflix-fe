@@ -35,7 +35,7 @@ export const Navbar = () => {
     { name: 'Trang chủ', path: '/' },
     { name: 'Phim Lẻ', path: '/movies' },
     { name: 'Phim Bộ', path: '/tv-shows' },
-    { name: 'Mới & Phổ biến', path: '/latest' },
+    { name: 'Khám phá', path: '/explore' },
   ];
   
   if (isAuthenticated) {
