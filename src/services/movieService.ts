@@ -55,8 +55,13 @@ const movieService = {
     return response.data.data as MovieListItem[];
   },
 
-  getLatest: async () => {
-    const response = await axiosClient.get('/api/movie/latest');
+  getLatest: async (type?: number) => {
+    const response = await axiosClient.get('/api/movie/latest', { params: { type } });
+    return response.data.data as MovieListItem[];
+  },
+
+  getTrending: async (type?: number) => {
+    const response = await axiosClient.get('/api/movie/trending', { params: { type } });
     return response.data.data as MovieListItem[];
   },
 

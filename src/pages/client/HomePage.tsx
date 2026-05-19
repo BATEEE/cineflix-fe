@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore';
 export const HomePage = () => {
   const [movies, setMovies] = useState<MovieListItem[]>([]);
   const [latestMovies, setLatestMovies] = useState<MovieListItem[]>([]);
+  const [trendingMovies, setTrendingMovies] = useState<MovieListItem[]>([]);
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
   const { isAuthenticated } = useAuthStore();
 
@@ -17,6 +18,9 @@ export const HomePage = () => {
 
     // Fetch top 10 phim mới nhất
     movieService.getLatest().then(setLatestMovies).catch(console.error);
+
+    // Fetch top 10 phim thịnh hành
+    movieService.getTrending().then(setTrendingMovies).catch(console.error);
 
     // Fetch lịch sử xem nếu đã đăng nhập
     if (isAuthenticated) {
@@ -33,6 +37,7 @@ export const HomePage = () => {
   });
 
   const latestMoviesRow = latestMovies.map(mapToRowItem);
+  const trendingMoviesRow = trendingMovies.map(mapToRowItem);
   const premiumMovies = movies.filter(m => m.isPremium).map(mapToRowItem);
 
   // Group history theo movieId, chỉ giữ lại tập mới nhất được xem (dựa trên lastWatchedAt)
@@ -66,6 +71,7 @@ export const HomePage = () => {
         {isAuthenticated && historyMovies.length > 0 && (
           <MovieRow title="Đang xem dở" movies={historyMovies} isContinueWatching={true} />
         )}
+        <MovieRow title="Phim Thịnh Hành" movies={trendingMoviesRow} />
         <MovieRow title="Phim Mới Cập Nhật" movies={latestMoviesRow} />
         <MovieRow title="Phim Độc Quyền 👑" movies={premiumMovies} />
       </div>

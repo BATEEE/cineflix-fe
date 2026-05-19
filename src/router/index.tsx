@@ -14,6 +14,8 @@ import { StudioSettingsPage, StudioCommentsPage, StudioRevenuePage } from '@/pag
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 import { HomePage } from '@/pages/client/HomePage'
+import { MoviesPage } from '@/pages/client/MoviesPage'
+import { TVShowsPage } from '@/pages/client/TVShowsPage'
 import { MovieDetailPage } from '@/pages/client/MovieDetailPage'
 import { WatchPage } from '@/pages/client/WatchPage'
 import { ProfilePage } from '@/pages/client/ProfilePage'
@@ -31,6 +33,8 @@ export const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'movies', element: <MoviesPage /> },
+      { path: 'tv-shows', element: <TVShowsPage /> },
       { path: 'movie/:id', element: <MovieDetailPage /> },
       { path: 'watch/:id', element: <WatchPage /> },
       { path: 'profile', element: <ProfilePage /> },
