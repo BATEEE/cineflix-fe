@@ -40,6 +40,17 @@ export interface UserListItem {
   vipExpireDate: string | null;
 }
 
+export interface AdminStudioListItem {
+  id: number;
+  studioName: string;
+  ownerUserId: number | null;
+  ownerUserName: string | null;
+  ownerEmail: string | null;
+  country: string | null;
+  isActive: boolean;
+  movieCount: number;
+}
+
 const adminService = {
   getDashboardStats: async () => {
     const response = await axiosClient.get('/api/admin/dashboard/stats');
@@ -49,6 +60,16 @@ const adminService = {
   getUsers: async () => {
     const response = await axiosClient.get('/api/admin/users');
     return response.data.data as UserListItem[];
+  },
+
+  getStudios: async () => {
+    const response = await axiosClient.get('/api/admin/studios');
+    return response.data.data as AdminStudioListItem[];
+  },
+
+  toggleStudioActive: async (id: number) => {
+    const response = await axiosClient.put(`/api/admin/studios/${id}/toggle-active`);
+    return response.data;
   },
 };
 

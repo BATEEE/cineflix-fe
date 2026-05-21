@@ -7,6 +7,9 @@ import { MainLayout } from '@/layouts/MainLayout'
 import { DashboardPage } from '@/pages/admin/DashboardPage'
 import { MoviesManagementPage } from '@/pages/admin/MoviesManagementPage'
 import { EpisodesManagementPage } from '@/pages/admin/EpisodesManagementPage'
+import { GenresManagementPage } from '@/pages/admin/GenresManagementPage'
+import { StudiosManagementPage } from '@/pages/admin/StudiosManagementPage'
+import { PersonsManagementPage } from '@/pages/admin/PersonsManagementPage'
 import { StudioLayout } from '@/layouts/StudioLayout'
 import { StudioDashboard } from '@/pages/studio/StudioDashboard'
 import { StudioMoviesPage } from '@/pages/studio/StudioMoviesPage'
@@ -55,6 +58,9 @@ export const router = createBrowserRouter([
           { path: 'dashboard', element: <DashboardPage /> },
           { path: 'movies', element: <MoviesManagementPage /> },
           { path: 'episodes', element: <EpisodesManagementPage /> },
+          { path: 'genres', element: <GenresManagementPage /> },
+          { path: 'studios', element: <StudiosManagementPage /> },
+          { path: 'persons', element: <PersonsManagementPage /> },
         ]
       }
     ]

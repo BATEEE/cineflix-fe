@@ -31,14 +31,14 @@ export const AdminLayout = () => {
       ]
     },
     {
-      title: "🎬 Nội dung",
+      title: "Nội dung",
       items: [
         { label: "Danh sách Phim", icon: Film, path: "/admin/movies" },
         { label: "Tập phim & Trailer", icon: Video, path: "/admin/episodes" },
       ]
     },
     {
-      title: "🗂️ Danh mục",
+      title: "Danh mục",
       items: [
         { label: "Thể loại", icon: Tags, path: "/admin/genres" },
         { label: "Hãng sản xuất", icon: Video, path: "/admin/studios" },
@@ -46,14 +46,14 @@ export const AdminLayout = () => {
       ]
     },
     {
-      title: "👥 Cộng đồng",
+      title: "Cộng đồng",
       items: [
         { label: "Người dùng", icon: Users, path: "/admin/users" },
         { label: "Bình luận", icon: MessageSquare, path: "/admin/comments" },
       ]
     },
     {
-      title: "💰 Kinh doanh",
+      title: "Kinh doanh",
       items: [
         { label: "Gói VIP", icon: CreditCard, path: "/admin/vip-packages" },
         { label: "Lịch sử Giao dịch", icon: History, path: "/admin/transactions" },
