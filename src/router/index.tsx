@@ -14,11 +14,11 @@ import { StudioSettingsPage, StudioCommentsPage, StudioRevenuePage } from '@/pag
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 import { HomePage } from '@/pages/client/HomePage'
-import { MoviesPage } from '@/pages/client/MoviesPage'
-import { TVShowsPage } from '@/pages/client/TVShowsPage'
+import { MoviesPage } from '@/pages/client/film/MoviesPage'
+import { TVShowsPage } from '@/pages/client/series/TVShowsPage'
 import { ExplorePage } from '@/pages/client/ExplorePage'
 import { MovieDetailPage } from '@/pages/client/MovieDetailPage'
-import { WatchPage } from '@/pages/client/WatchPage'
+import { WatchPage } from '@/pages/client/my_list/WatchPage'
 import { ProfilePage } from '@/pages/client/ProfilePage'
 import { SearchPage } from '@/pages/client/SearchPage'
 

@@ -38,6 +38,22 @@ export interface MovieDetail extends MovieListItem {
   episodes: EpisodeSummary[];
 }
 
+export interface MovieDto {
+  id: number;
+  title: string;
+  coverImg: string;
+  avgRating: number;
+  isPremium: boolean;
+  type: number;
+  genres: string[];
+}
+
+export interface HomeFeedDto {
+  hotMovies: MovieDto[];
+  newMovies: MovieDto[];
+  topRatedMovies: MovieDto[];
+}
+
 export interface CreateMoviePayload {
   title: string;
   description?: string;
@@ -96,6 +112,11 @@ const movieService = {
   getTrending: async (type?: number) => {
     const response = await axiosClient.get('/api/movie/trending', { params: { type } });
     return response.data.data as MovieListItem[];
+  },
+
+  getHomeFeed: async () => {
+    const response = await axiosClient.get('/api/movie/home-feed');
+    return response.data.data as HomeFeedDto;
   },
 
   getExplore: async (params?: ExploreParams) => {
