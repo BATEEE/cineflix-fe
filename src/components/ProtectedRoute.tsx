@@ -9,20 +9,17 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
   const { isAuthenticated, user } = useAuthStore();
 
-  // 1. Nếu chưa đăng nhập -> Chuyển về trang login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // 2. Nếu đã đăng nhập nhưng không có role phù hợp -> Chuyển về trang chủ
   if (allowedRoles && user) {
-    const hasRole = allowedRoles.includes(user.roleId) || allowedRoles.includes(user.roleName);
+    const hasRole = allowedRoles.includes(user.roleId);
     if (!hasRole) {
       return <Navigate to="/" replace />;
     }
   }
 
-  // 3. Nếu thỏa mãn -> Hiển thị nội dung bên trong (Outlet)
   return <Outlet />;
 };
 

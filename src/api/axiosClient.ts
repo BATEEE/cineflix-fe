@@ -29,7 +29,9 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest.url?.includes('/login')) {
       // Có thể xử lý logout hoặc refresh token ở đây
       localStorage.removeItem('auth-storage');
       window.location.href = '/login';

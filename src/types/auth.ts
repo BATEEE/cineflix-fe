@@ -41,6 +41,7 @@ export interface AuthResponseData {
   email: string;
   displayName: string;
   avt: string | null;
+  isVip: boolean;
 }
 
 // ApiResponse<T> wrapper
@@ -58,4 +59,5 @@ export interface User {
   displayName: string;
   avt: string | null;
   roleId: number;  // 1 = Admin, 2 = User (decoded from JWT)
+  isVip?: boolean;
 }
