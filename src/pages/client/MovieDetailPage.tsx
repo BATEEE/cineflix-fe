@@ -105,7 +105,9 @@ export const MovieDetailPage = () => {
     movieDetail.episodes?.find((e) => e.videoType === 2)?.videoUrl || "";
   const trailerUrl = rawTrailer ? getImageUrl(rawTrailer) : "";
 
-  const handleWatchClick = (e: React.MouseEvent, episodeId?: number) => {
+  const handleWatchClick = (e: React.MouseEvent, videoType?: number) => {
+    if (videoType === 2) return; // Cho phép xem trailer tự do
+
     if (movieDetail?.isPremium) {
       if (!isAuthenticated || !user?.isVip) {
         e.preventDefault();
@@ -408,7 +410,7 @@ export const MovieDetailPage = () => {
                           <Link
                             key={ep.id}
                             to={`/watch/${movieDetail.id}?episode=${ep.id}`}
-                            onClick={handleWatchClick}
+                            onClick={(e) => handleWatchClick(e, ep.videoType)}
                             className="flex gap-4 bg-white/5 hover:bg-white/10 rounded-lg p-3 transition-colors duration-300 group border border-transparent hover:border-white/10"
                           >
                             <div className="w-32 aspect-video rounded-md overflow-hidden relative shrink-0 shadow-md">
@@ -458,7 +460,7 @@ export const MovieDetailPage = () => {
                           <Link
                             key={ep.id}
                             to={`/watch/${movieDetail.id}?episode=${ep.id}`}
-                            onClick={handleWatchClick}
+                            onClick={(e) => handleWatchClick(e, ep.videoType)}
                             className="flex gap-4 bg-white/5 hover:bg-white/10 rounded-lg p-3 transition-colors duration-300 group border border-transparent hover:border-green-500/30"
                           >
                             <div className="w-32 aspect-video rounded-md overflow-hidden relative shrink-0 shadow-md">
@@ -505,7 +507,7 @@ export const MovieDetailPage = () => {
                     <Link
                       key={ep.id}
                       to={`/watch/${movieDetail.id}?episode=${ep.id}`}
-                      onClick={handleWatchClick}
+                      onClick={(e) => handleWatchClick(e, ep.videoType)}
                       className="flex flex-row gap-4 bg-white/5 hover:bg-white/10 rounded-xl p-3 transition-all duration-300 group border border-transparent hover:border-white/10 relative overflow-hidden"
                     >
                       <div className="w-32 sm:w-40 aspect-video rounded-lg overflow-hidden relative shrink-0 shadow-md">

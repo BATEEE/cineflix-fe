@@ -189,7 +189,7 @@ export const WatchPage = () => {
     ? getImageUrl(videoUrlRaw)
     : "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4";
 
-  if (movie.isPremium && (!isAuthenticated || !user?.isVip)) {
+  if (movie.isPremium && currentEpisode.videoType !== 2 && (!isAuthenticated || !user?.isVip)) {
     return (
       <div className="min-h-screen bg-brand-bg pt-[68px] flex items-center justify-center p-4">
         <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl max-w-lg text-center shadow-2xl">
