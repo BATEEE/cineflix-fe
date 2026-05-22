@@ -8,6 +8,7 @@ interface AuthState {
   isAuthenticated: boolean
   login: (user: User, token: string) => void
   logout: () => void
+  setVip: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -19,6 +20,11 @@ export const useAuthStore = create<AuthState>()(
       login: (user, token) => set({ user, token, isAuthenticated: true }),
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
+      },
+      setVip: () => {
+        set((state) => ({
+          user: state.user ? { ...state.user, isVip: true } : null,
+        }));
       },
     }),
     { name: 'auth-storage' }
