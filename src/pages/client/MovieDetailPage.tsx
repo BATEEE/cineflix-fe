@@ -101,8 +101,9 @@ export const MovieDetailPage = () => {
     movieDetail.avgRating ??
     (movieDetail as any).avgrating ??
     (movieDetail as any).Avgrating;
-  const trailerUrl =
+  const rawTrailer =
     movieDetail.episodes?.find((e) => e.videoType === 2)?.videoUrl || "";
+  const trailerUrl = rawTrailer ? getImageUrl(rawTrailer) : "";
 
   const handleWatchClick = (e: React.MouseEvent, episodeId?: number) => {
     if (movieDetail?.isPremium) {
@@ -404,10 +405,11 @@ export const MovieDetailPage = () => {
                       {movieDetail.episodes
                         .filter((ep) => ep.videoType === 2)
                         .map((ep) => (
-                          <div
+                          <Link
                             key={ep.id}
-                            onClick={() => setIsTrailerOpen(true)}
-                            className="flex gap-4 bg-white/5 hover:bg-white/10 rounded-lg p-3 transition-colors duration-300 group cursor-pointer border border-transparent hover:border-white/10"
+                            to={`/watch/${movieDetail.id}?episode=${ep.id}`}
+                            onClick={handleWatchClick}
+                            className="flex gap-4 bg-white/5 hover:bg-white/10 rounded-lg p-3 transition-colors duration-300 group border border-transparent hover:border-white/10"
                           >
                             <div className="w-32 aspect-video rounded-md overflow-hidden relative shrink-0 shadow-md">
                               <img
@@ -429,7 +431,7 @@ export const MovieDetailPage = () => {
                                 {ep.duration || "N/A"}
                               </span>
                             </div>
-                          </div>
+                          </Link>
                         ))}
                     </div>
                   )}
