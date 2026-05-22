@@ -27,6 +27,8 @@ import { WatchPage } from "@/pages/client/my_list/WatchPage";
 import { ProfilePage } from "@/pages/client/ProfilePage";
 import { SearchPage } from "@/pages/client/SearchPage";
 import { VipPage } from "@/pages/client/VipPage";
+import { MomoCallbackPage } from "@/pages/client/MomoCallbackPage";
+import { VipPackagesManagementPage } from "@/pages/admin/VipPackagesManagementPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <AuthPage /> },
@@ -48,6 +50,7 @@ export const router = createBrowserRouter([
       { path: "profile", element: <ProfilePage /> },
       { path: "search", element: <SearchPage /> },
       { path: "vip", element: <VipPage /> },
+      { path: "momo-callback", element: <MomoCallbackPage /> },
       // Other routes like /movies, /tv-shows will go here
     ],
   },
@@ -67,6 +70,7 @@ export const router = createBrowserRouter([
           { path: 'persons', element: <PersonsManagementPage /> },
           { path: 'users', element: <UsersManagementPage /> },
           { path: 'comments', element: <CommentsManagementPage /> },
+          { path: 'vip-packages', element: <VipPackagesManagementPage /> },
         ]
       }
     ]

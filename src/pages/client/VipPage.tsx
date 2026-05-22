@@ -7,6 +7,7 @@ import vipPackageService, {
 } from "@/services/vipPackageService";
 import { useAuthStore } from "@/stores/authStore";
 import { VietQRPaymentModal } from "@/components/VietQRPaymentModal";
+import { PaymentSelectionModal } from "@/components/PaymentSelectionModal";
 
 const PACKAGE_ICONS = [Crown, Star, Zap];
 const PACKAGE_COLORS = [
@@ -25,13 +26,17 @@ export const VipPage = () => {
   const [packages, setPackages] = useState<VipPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPkg, setSelectedPkg] = useState<VipPackage | null>(null);
+  const [showSelection, setShowSelection] = useState(false);
+  const [showVietQR, setShowVietQR] = useState(false);
   const { isAuthenticated, user, setVip } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     vipPackageService
       .getAll()
-      .then(setPackages)
+      .then((data) => {
+        setPackages(data.filter((p) => p.isActive));
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -47,6 +52,34 @@ export const VipPage = () => {
       return;
     }
     setSelectedPkg(pkg);
+    setShowSelection(true);
+  };
+
+  const handleSelectMethod = async (method: "vietqr" | "momo") => {
+    if (!selectedPkg) return;
+    setShowSelection(false);
+
+    if (method === "vietqr") {
+      setShowVietQR(true);
+    } else if (method === "momo") {
+      const toastId = toast.loading("Đang khởi tạo giao dịch MoMo...");
+      try {
+        const response = await vipPackageService.purchase({
+          packageId: selectedPkg.id,
+          paymentMethod: "MoMo",
+        });
+
+        if (response.success && response.data?.payUrl) {
+          toast.success("Đang chuyển hướng sang MoMo...", { id: toastId });
+          window.location.href = response.data.payUrl;
+        } else {
+          toast.error(response.message || "Không thể tạo liên kết thanh toán MoMo", { id: toastId });
+        }
+      } catch (err: any) {
+        console.error("MoMo purchase error:", err);
+        toast.error("Đã xảy ra lỗi khi kết nối với cổng thanh toán MoMo", { id: toastId });
+      }
+    }
   };
 
   const handlePaymentSuccess = async () => {
@@ -68,7 +101,11 @@ export const VipPage = () => {
     }
   };
 
-  const handleCloseModal = () => setSelectedPkg(null);
+  const handleCloseModal = () => {
+    setSelectedPkg(null);
+    setShowSelection(false);
+    setShowVietQR(false);
+  };
 
   if (loading) {
     return (
@@ -249,18 +286,27 @@ export const VipPage = () => {
         <div className="mt-12 text-center">
           <p className="text-gray-500 text-sm mb-3">Hỗ trợ thanh toán qua</p>
           <div className="flex justify-center items-center gap-6 text-gray-400">
-            <span className="text-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+            <span className="text-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
               🏦 VietQR
             </span>
-            <span className="text-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
-              📱 Chuyển khoản ngân hàng
+            <span className="text-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+              📱 Ví MoMo
             </span>
           </div>
         </div>
       </div>
 
-      {/* ── Modal ── */}
-      {selectedPkg && (
+      {/* ── Modal Chọn Phương Thức Thanh Toán ── */}
+      {selectedPkg && showSelection && (
+        <PaymentSelectionModal
+          pkg={selectedPkg}
+          onClose={handleCloseModal}
+          onSelect={handleSelectMethod}
+        />
+      )}
+
+      {/* ── Modal VietQR ── */}
+      {selectedPkg && showVietQR && (
         <VietQRPaymentModal
           pkg={selectedPkg}
           onClose={handleCloseModal}

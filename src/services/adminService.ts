@@ -65,6 +65,21 @@ export interface AdminCommentListItem {
   isDeleted: boolean;
 }
 
+export interface AdminVipPackage {
+  id: number;
+  packageName: string;
+  price: number;
+  durationMonths: number;
+  isActive: boolean;
+}
+
+export interface VipPackagePayload {
+  packageName: string;
+  price: number;
+  durationMonths: number;
+  isActive: boolean;
+}
+
 const adminService = {
   getDashboardStats: async () => {
     const response = await axiosClient.get('/api/admin/dashboard/stats');
@@ -98,6 +113,26 @@ const adminService = {
 
   toggleCommentDelete: async (id: number) => {
     const response = await axiosClient.put(`/api/admin/comments/${id}/toggle-delete`);
+    return response.data;
+  },
+
+  getVipPackages: async () => {
+    const response = await axiosClient.get('/api/admin/vip-packages');
+    return response.data.data as AdminVipPackage[];
+  },
+
+  createVipPackage: async (payload: VipPackagePayload) => {
+    const response = await axiosClient.post('/api/admin/vip-packages', payload);
+    return response.data.data as AdminVipPackage;
+  },
+
+  updateVipPackage: async (id: number, payload: VipPackagePayload) => {
+    const response = await axiosClient.put(`/api/admin/vip-packages/${id}`, payload);
+    return response.data.data as AdminVipPackage;
+  },
+
+  toggleVipPackageActive: async (id: number) => {
+    const response = await axiosClient.put(`/api/admin/vip-packages/${id}/toggle-active`);
     return response.data;
   },
 };
