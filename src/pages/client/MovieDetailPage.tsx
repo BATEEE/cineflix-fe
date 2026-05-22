@@ -105,6 +105,18 @@ export const MovieDetailPage = () => {
     movieDetail.episodes?.find((e) => e.videoType === 2)?.videoUrl || "";
   const trailerUrl = rawTrailer ? getImageUrl(rawTrailer) : "";
 
+  // Tìm tập phim chính thức (phim lẻ) hoặc tập 1 (phim bộ)
+  const mainEpisode = movieDetail.episodes?.find(ep => {
+    if (movieDetail.type === 1) {
+      return ep.videoType === 1;
+    } else {
+      return ep.videoType === 1 && ep.episodeNumber === 1;
+    }
+  }) || movieDetail.episodes?.find(ep => ep.videoType === 1);
+
+  // Tìm trailer đầu tiên
+  const firstTrailer = movieDetail.episodes?.find(ep => ep.videoType === 2);
+
   const handleWatchClick = (e: React.MouseEvent, videoType?: number) => {
     if (videoType === 2) return; // Cho phép xem trailer tự do
 
@@ -200,21 +212,30 @@ export const MovieDetailPage = () => {
 
             {/* Actions */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4">
-              <Link
-                to={`/watch/${movieDetail.id}`}
-                onClick={handleWatchClick}
+               <Link
+                to={mainEpisode ? `/watch/${movieDetail.id}?episode=${mainEpisode.id}` : `/watch/${movieDetail.id}`}
+                onClick={(e) => handleWatchClick(e, mainEpisode?.videoType)}
                 className="flex items-center justify-center gap-2 bg-brand-red text-white px-8 py-3 rounded font-bold text-base sm:text-lg hover:bg-[#C11119] transition-all duration-300 shadow-[0_0_15px_rgba(229,9,20,0.3)] hover:scale-105"
               >
                 <Play className="w-5 h-5 fill-white" />
                 {movieDetail.type === 2 ? "Xem Tập 1" : "Xem Phim"}
               </Link>
 
-              {trailerUrl && (
-                <button
-                  onClick={() => setIsTrailerOpen(true)}
-                  className="flex items-center justify-center gap-2 bg-white/15 text-white border border-white/20 px-6 py-3 rounded font-semibold text-base sm:text-lg hover:bg-white/25 transition-all duration-300 backdrop-blur-md"
+              {firstTrailer ? (
+                <Link
+                  to={`/watch/${movieDetail.id}?episode=${firstTrailer.id}`}
+                  onClick={(e) => handleWatchClick(e, firstTrailer.videoType)}
+                  className="flex items-center justify-center gap-2 bg-white/15 text-white border border-white/20 px-6 py-3 rounded font-semibold text-base sm:text-lg hover:bg-white/25 transition-all duration-300 backdrop-blur-md hover:scale-105"
                 >
                   <Film className="w-5 h-5" />
+                  Trailer
+                </Link>
+              ) : (
+                <button
+                  onClick={() => alert("Bộ phim này hiện chưa có trailer chính thức!")}
+                  className="flex items-center justify-center gap-2 bg-white/5 text-white/40 border border-white/5 px-6 py-3 rounded font-semibold text-base sm:text-lg hover:bg-white/10 transition-all duration-300"
+                >
+                  <Film className="w-5 h-5 text-white/40" />
                   Trailer
                 </button>
               )}
@@ -640,7 +661,7 @@ export const MovieDetailPage = () => {
             </p>
             <div className="flex flex-col gap-3">
               <Link
-                to="/goi-vip"
+                to="/vip"
                 className="w-full bg-brand-gold text-black py-3.5 rounded-lg font-bold text-base hover:bg-yellow-500 transition-colors shadow-[0_0_15px_rgba(252,211,77,0.3)] shadow-brand-gold/20"
               >
                 Nâng cấp VIP ngay
