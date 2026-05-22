@@ -10,6 +10,8 @@ import { EpisodesManagementPage } from '@/pages/admin/EpisodesManagementPage'
 import { GenresManagementPage } from '@/pages/admin/GenresManagementPage'
 import { StudiosManagementPage } from '@/pages/admin/StudiosManagementPage'
 import { PersonsManagementPage } from '@/pages/admin/PersonsManagementPage'
+import { UsersManagementPage } from '@/pages/admin/UsersManagementPage'
+import { CommentsManagementPage } from '@/pages/admin/CommentsManagementPage'
 import { StudioLayout } from '@/layouts/StudioLayout'
 import { StudioDashboard } from '@/pages/studio/StudioDashboard'
 import { StudioMoviesPage } from '@/pages/studio/StudioMoviesPage'
@@ -61,6 +63,8 @@ export const router = createBrowserRouter([
           { path: 'genres', element: <GenresManagementPage /> },
           { path: 'studios', element: <StudiosManagementPage /> },
           { path: 'persons', element: <PersonsManagementPage /> },
+          { path: 'users', element: <UsersManagementPage /> },
+          { path: 'comments', element: <CommentsManagementPage /> },
         ]
       }
     ]
