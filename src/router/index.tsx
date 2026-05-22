@@ -18,39 +18,41 @@ import { StudioMoviesPage } from '@/pages/studio/StudioMoviesPage'
 import { StudioSettingsPage, StudioCommentsPage, StudioRevenuePage } from '@/pages/studio/StudioOtherPages'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
-import { HomePage } from '@/pages/client/HomePage'
-import { MoviesPage } from '@/pages/client/film/MoviesPage'
-import { TVShowsPage } from '@/pages/client/series/TVShowsPage'
-import { ExplorePage } from '@/pages/client/ExplorePage'
-import { MovieDetailPage } from '@/pages/client/MovieDetailPage'
-import { WatchPage } from '@/pages/client/my_list/WatchPage'
-import { ProfilePage } from '@/pages/client/ProfilePage'
-import { SearchPage } from '@/pages/client/SearchPage'
+import { HomePage } from "@/pages/client/HomePage";
+import { MoviesPage } from "@/pages/client/film/MoviesPage";
+import { TVShowsPage } from "@/pages/client/series/TVShowsPage";
+import { ExplorePage } from "@/pages/client/ExplorePage";
+import { MovieDetailPage } from "@/pages/client/MovieDetailPage";
+import { WatchPage } from "@/pages/client/my_list/WatchPage";
+import { ProfilePage } from "@/pages/client/ProfilePage";
+import { SearchPage } from "@/pages/client/SearchPage";
+import { VipPage } from "@/pages/client/VipPage";
 
 export const router = createBrowserRouter([
-  { path: '/login',          element: <AuthPage /> },
-  { path: '/register',       element: <AuthPage /> },
-  { path: '/register-admin', element: <RegisterAdminPage /> },
-  { path: '/register-partner', element: <RegisterPartnerPage /> },
-  
+  { path: "/login", element: <AuthPage /> },
+  { path: "/register", element: <AuthPage /> },
+  { path: "/register-admin", element: <RegisterAdminPage /> },
+  { path: "/register-partner", element: <RegisterPartnerPage /> },
+
   // Public/User Routes with MainLayout
   {
-    path: '/',
+    path: "/",
     element: <MainLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'movies', element: <MoviesPage /> },
-      { path: 'tv-shows', element: <TVShowsPage /> },
-      { path: 'explore', element: <ExplorePage /> },
-      { path: 'movie/:id', element: <MovieDetailPage /> },
-      { path: 'watch/:id', element: <WatchPage /> },
-      { path: 'profile', element: <ProfilePage /> },
-      { path: 'search', element: <SearchPage /> },
+      { path: "movies", element: <MoviesPage /> },
+      { path: "tv-shows", element: <TVShowsPage /> },
+      { path: "explore", element: <ExplorePage /> },
+      { path: "movie/:id", element: <MovieDetailPage /> },
+      { path: "watch/:id", element: <WatchPage /> },
+      { path: "profile", element: <ProfilePage /> },
+      { path: "search", element: <SearchPage /> },
+      { path: "vip", element: <VipPage /> },
       // Other routes like /movies, /tv-shows will go here
-    ]
+    ],
   },
   {
-    path: '/admin',
+    path: "/admin",
     element: <ProtectedRoute allowedRoles={[1, 3]} />,
     children: [
       {
@@ -70,20 +72,20 @@ export const router = createBrowserRouter([
     ]
   },
   {
-    path: '/studio',
+    path: "/studio",
     element: <ProtectedRoute allowedRoles={[1, 3]} />,
     children: [
       {
         element: <StudioLayout />,
         children: [
           { index: true, element: <Navigate to="/studio/dashboard" replace /> },
-          { path: 'dashboard', element: <StudioDashboard /> },
-          { path: 'movies', element: <StudioMoviesPage /> },
-          { path: 'comments', element: <StudioCommentsPage /> },
-          { path: 'revenue', element: <StudioRevenuePage /> },
-          { path: 'settings', element: <StudioSettingsPage /> },
-        ]
-      }
-    ]
-  }
-])
+          { path: "dashboard", element: <StudioDashboard /> },
+          { path: "movies", element: <StudioMoviesPage /> },
+          { path: "comments", element: <StudioCommentsPage /> },
+          { path: "revenue", element: <StudioRevenuePage /> },
+          { path: "settings", element: <StudioSettingsPage /> },
+        ],
+      },
+    ],
+  },
+]);

@@ -4,6 +4,7 @@ import { Play, Heart, Share2, Star, Clock, Calendar, Film } from "lucide-react";
 import { TrailerModal } from "@/components/TrailerModal";
 import movieService, { type MovieDetail } from "@/services/movieService";
 import favListService from "@/services/favListService";
+import ratingService from "@/services/ratingService";
 import { useAuthStore } from "@/stores/authStore";
 
 export const MovieDetailPage = () => {
@@ -27,8 +28,14 @@ export const MovieDetailPage = () => {
         setMovieDetail(data);
 
         if (isAuthenticated) {
-          const favStatus = await favListService.check(Number(id));
+          const [favStatus, rating] = await Promise.all([
+            favListService.check(Number(id)),
+            ratingService.getUserRating(Number(id)),
+          ]);
           setIsFavorite(favStatus);
+          if (rating) {
+            setUserRating(rating);
+          }
         }
       } catch (err) {
         console.error("Lỗi khi tải chi tiết phim:", err);
@@ -234,8 +241,105 @@ export const MovieDetailPage = () => {
         </div>
       </div>
 
+      {/* Rating & Review Banner */}
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 mt-8 md:mt-12 mb-4 relative z-20">
+        <div className="bg-neutral-900/80 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-black/50">
+          {/* Aggregate Rating */}
+          <div className="flex items-center gap-6 md:gap-8 w-full md:w-auto justify-center md:justify-start">
+            <div className="text-center">
+              <h2 className="text-5xl md:text-6xl font-black text-brand-gold drop-shadow-md">
+                {rawRating !== undefined && rawRating > 0
+                  ? rawRating.toFixed(1)
+                  : "-"}
+              </h2>
+              <p className="text-gray-400 font-medium tracking-widest mt-1">
+                / 5
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-xl font-bold text-white leading-none">
+                Đánh giá trung bình
+              </h3>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-5 h-5 md:w-6 md:h-6 ${
+                      (rawRating && rawRating >= star) ||
+                      (rawRating && rawRating >= star - 0.5)
+                        ? "text-brand-gold fill-brand-gold"
+                        : "text-zinc-700"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-gray-500">
+                Người dùng trên toàn hệ thống
+              </p>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden md:block w-px h-20 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+          <div className="block md:hidden w-full h-px bg-white/10"></div>
+
+          {/* User Rating Action */}
+          <div className="flex flex-col items-center gap-3 w-full md:w-auto">
+            <h4 className="text-base font-bold text-white flex items-center gap-2">
+              <Star className="w-5 h-5 text-brand-gold fill-brand-gold" />
+              Đánh giá của bạn
+            </h4>
+            <div className="flex flex-col items-center group">
+              <div
+                className="flex items-center gap-2 md:gap-3"
+                onMouseLeave={() => setHoveredStar(0)}
+              >
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onMouseEnter={() => setHoveredStar(star)}
+                    onClick={async () => {
+                      if (!isAuthenticated) {
+                        alert("Vui lòng đăng nhập để đánh giá phim!");
+                        return;
+                      }
+                      try {
+                        await ratingService.upsert({
+                          movieId: movieDetail.id,
+                          score: star,
+                        });
+                        setUserRating(star);
+                      } catch (error) {
+                        console.error("Lỗi khi đánh giá:", error);
+                        alert("Có lỗi xảy ra, vui lòng thử lại sau.");
+                      }
+                    }}
+                    className="focus:outline-none transition-transform hover:scale-125 duration-300"
+                    title={`${star} sao`}
+                  >
+                    <Star
+                      className={`w-8 h-8 md:w-10 md:h-10 transition-colors duration-300 ${
+                        (hoveredStar || userRating) >= star
+                          ? "text-brand-gold fill-brand-gold drop-shadow-[0_0_8px_rgba(252,211,77,0.6)]"
+                          : "text-zinc-600 hover:text-brand-gold/70"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="text-sm text-gray-400 mt-3 font-medium h-5">
+                {userRating
+                  ? `Bạn đã chấm ${userRating} sao. Cảm ơn bạn!`
+                  : "Click vào các ngôi sao để đánh giá"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Details Section */}
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 mt-10 md:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-10 md:gap-16">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 mt-10 grid grid-cols-1 lg:grid-cols-3 gap-10 md:gap-16">
         {/* Main Column */}
         <div className="lg:col-span-2 space-y-12 md:space-y-16">
           {/* Cast */}
@@ -481,51 +585,6 @@ export const MovieDetailPage = () => {
                   )}
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* User Rating Section */}
-          <div className="bg-neutral-900/50 backdrop-blur-md rounded-2xl p-5 md:p-6 sm:p-7 border border-white/5 shadow-xl">
-            <h4 className="text-sm sm:text-base md:text-lg font-bold text-white mb-4 sm:mb-5 flex items-center gap-2">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-brand-gold fill-current" />
-              Đánh giá của bạn
-            </h4>
-            <div className="flex flex-col items-center gap-3">
-              <div
-                className="flex items-center gap-2"
-                onMouseLeave={() => setHoveredStar(0)}
-              >
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onMouseEnter={() => setHoveredStar(star)}
-                    onClick={() => {
-                      if (!isAuthenticated) {
-                        alert("Vui lòng đăng nhập để đánh giá phim!");
-                        return;
-                      }
-                      setUserRating(star);
-                      // API placeholder: post rating here
-                    }}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                    title={`${star} sao`}
-                  >
-                    <Star
-                      className={`w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 transition-colors ${
-                        (hoveredStar || userRating) >= star
-                          ? "text-brand-gold fill-brand-gold"
-                          : "text-zinc-600"
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs sm:text-sm text-gray-500 text-center mt-2">
-                {userRating
-                  ? `Bạn đã đánh giá ${userRating} sao. Cảm ơn nhé!`
-                  : "Click vào sao để đánh giá phim này"}
-              </p>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import { Send, ThumbsUp, AlertCircle, X } from "lucide-react";
+import { Send, ThumbsUp, AlertCircle, X, ArrowLeft } from "lucide-react";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useAuthStore } from "@/stores/authStore";
 import movieService, { type MovieDetail } from "@/services/movieService";
@@ -262,6 +262,13 @@ export const WatchPage = () => {
           </div>
 
           <div className="p-4 sm:p-6 lg:p-8">
+            <Link
+              to={`/movie/${movie.id}`}
+              className="inline-flex items-center gap-2 text-gray-400 hover:text-brand-red mb-6 transition-colors font-medium"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Quay lại chi tiết phim
+            </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
               {movie.title}
             </h1>
