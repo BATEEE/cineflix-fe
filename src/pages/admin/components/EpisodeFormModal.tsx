@@ -23,7 +23,7 @@ export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onCl
     episodeNumber: 1, // Default, you might want to auto-increment this
     episodeTitle: '',
     duration: '',
-    videoType: 2, // 1: Trailer, 2: Main Episode
+    videoType: 1, // 1: Main Episode, 2: Trailer
   });
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onCl
         episodeNumber: episode.episodeNumber || 1,
         episodeTitle: episode.episodeTitle || '',
         duration: episode.duration || '',
-        videoType: episode.videoType || 2,
+        videoType: episode.videoType || 1,
       });
     } else if (isOpen) {
       setFormData({
@@ -41,7 +41,7 @@ export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onCl
         episodeNumber: 1,
         episodeTitle: '',
         duration: '',
-        videoType: 2,
+        videoType: 1,
       });
     }
   }, [episode, isOpen, movieId]);
@@ -98,8 +98,8 @@ export const EpisodeFormModal: React.FC<EpisodeFormModalProps> = ({ isOpen, onCl
                   <SelectValue placeholder="Chọn loại video" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                  <SelectItem value="1">Trailer</SelectItem>
-                  <SelectItem value="2">Phim chính</SelectItem>
+                  <SelectItem value="1">Phim chính</SelectItem>
+                  <SelectItem value="2">Trailer</SelectItem>
                 </SelectContent>
               </Select>
             </div>

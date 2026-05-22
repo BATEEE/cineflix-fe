@@ -38,6 +38,31 @@ export interface UserListItem {
   createdAt: string;
   isActive: boolean;
   vipExpireDate: string | null;
+  studioName: string | null;
+}
+
+export interface AdminStudioListItem {
+  id: number;
+  studioName: string;
+  ownerUserId: number | null;
+  ownerUserName: string | null;
+  ownerEmail: string | null;
+  country: string | null;
+  isActive: boolean;
+  movieCount: number;
+}
+
+export interface AdminCommentListItem {
+  id: number;
+  movieId: number;
+  movieTitle: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  userAvt: string | null;
+  content: string;
+  commentDate: string;
+  isDeleted: boolean;
 }
 
 const adminService = {
@@ -49,6 +74,31 @@ const adminService = {
   getUsers: async () => {
     const response = await axiosClient.get('/api/admin/users');
     return response.data.data as UserListItem[];
+  },
+
+  getStudios: async () => {
+    const response = await axiosClient.get('/api/admin/studios');
+    return response.data.data as AdminStudioListItem[];
+  },
+
+  toggleStudioActive: async (id: number) => {
+    const response = await axiosClient.put(`/api/admin/studios/${id}/toggle-active`);
+    return response.data;
+  },
+
+  toggleUserActive: async (id: number) => {
+    const response = await axiosClient.put(`/api/admin/users/${id}/toggle-active`);
+    return response.data;
+  },
+
+  getComments: async () => {
+    const response = await axiosClient.get('/api/admin/comments');
+    return response.data.data as AdminCommentListItem[];
+  },
+
+  toggleCommentDelete: async (id: number) => {
+    const response = await axiosClient.put(`/api/admin/comments/${id}/toggle-delete`);
+    return response.data;
   },
 };
 

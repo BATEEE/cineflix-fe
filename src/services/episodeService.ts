@@ -10,7 +10,10 @@ export interface Episode {
   duration: string | null;
   releaseDate: string | null;
   videoType: number; // 1=Trailer, 2=Main
+  isDeleted: boolean;
 }
+
+export type EpisodeDetail = Episode;
 
 export interface CreateEpisodePayload {
   movieId: number;
@@ -41,6 +44,11 @@ const episodeService = {
 
   delete: async (id: number) => {
     const response = await axiosClient.delete(`/api/episode/${id}`);
+    return response.data;
+  },
+
+  toggleStatus: async (id: number) => {
+    const response = await axiosClient.patch(`/api/episode/${id}/toggle`);
     return response.data;
   },
 };

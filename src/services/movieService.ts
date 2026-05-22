@@ -8,6 +8,7 @@ export interface MovieListItem {
   releaseDate: string;
   type: number; // 1=Phim lẻ, 2=Phim bộ
   studioName: string;
+  country?: string | null;
   avgRating: number;
   totalViews: number;
   isPremium: boolean;
@@ -99,9 +100,20 @@ export const cleanParams = <T extends Record<string, any>>(params: T): Partial<T
 };
 
 const movieService = {
-  getAll: async (params?: { search?: string; type?: number; genreId?: number; isPremium?: boolean }) => {
-    const response = await axiosClient.get('/api/movie', { params });
-    return response.data.data as MovieListItem[];
+  getAll: async (params?: { 
+    search?: string; 
+    type?: number; 
+    genreId?: number; 
+    isPremium?: boolean;
+    country?: string;
+    year?: number;
+    status?: string;
+    pageIndex?: number;
+    pageSize?: number;
+  }) => {
+    const cleaned = params ? cleanParams(params) : undefined;
+    const response = await axiosClient.get('/api/movie', { params: cleaned });
+    return response.data.data;
   },
 
   getLatest: async (type?: number) => {
