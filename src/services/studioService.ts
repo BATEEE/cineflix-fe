@@ -1,5 +1,48 @@
 import axiosClient from '../api/axiosClient';
 
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  pageIndex: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface StudioCommentDto {
+  id: number;
+  content: string;
+  userName: string;
+  movieTitle: string;
+  createdAt: string;
+}
+
+export interface StudioEstimatedRevenueDto {
+  studioVipViews: number;
+  totalPlatformVipViews: number;
+  platformRevenuePool: number;
+  revenueSharePercentage: number;
+  estimatedPayout: number;
+}
+
+export interface StudioPayoutHistoryDto {
+  id: number;
+  settlementMonth: number;
+  settlementYear: number;
+  totalVipViews: number;
+  platformRevenuePool: number;
+  revenueSharePercentage: number;
+  payoutAmount: number;
+  status: number;
+  createdAt: string;
+}
+
+export interface StudioRevenueDto {
+  estimatedRevenue: StudioEstimatedRevenueDto;
+  payoutHistory: StudioPayoutHistoryDto[];
+}
+
 export interface StudioStatCard {
   value: number;
   change: string;
@@ -60,9 +103,9 @@ const studioService = {
     return response.data as StudioMovieListItem[];
   },
 
-  getComments: async () => {
-    const response = await axiosClient.get('/api/studio/comments');
-    return response.data;
+  getComments: async (params?: { movieId?: number; pageIndex?: number; pageSize?: number }) => {
+    const response = await axiosClient.get('/api/studio/comments', { params });
+    return response.data as PagedResult<StudioCommentDto>;
   },
 
   updateSettings: async (payload: { studioName: string; country: string }) => {
@@ -103,6 +146,11 @@ const studioService = {
   deleteEpisode: async (episodeId: number) => {
     const response = await axiosClient.delete(`/api/studio/episodes/${episodeId}`);
     return response.data;
+  },
+
+  getRevenueStats: async () => {
+    const response = await axiosClient.get('/api/studio/revenue');
+    return response.data as StudioRevenueDto;
   }
 };
 
