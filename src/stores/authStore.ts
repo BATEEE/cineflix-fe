@@ -9,6 +9,7 @@ interface AuthState {
   login: (user: User, token: string) => void
   logout: () => void
   setVip: () => void
+  updateUser: (updatedUser: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -24,6 +25,11 @@ export const useAuthStore = create<AuthState>()(
       setVip: () => {
         set((state) => ({
           user: state.user ? { ...state.user, isVip: true } : null,
+        }));
+      },
+      updateUser: (updatedUser) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updatedUser } : null,
         }));
       },
     }),

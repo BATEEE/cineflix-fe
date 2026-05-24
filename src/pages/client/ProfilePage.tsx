@@ -86,9 +86,9 @@ export const ProfilePage = () => {
               </span>
             </div>
           </div>
-          <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md transition-colors mt-4 md:mt-0">
+          <Link to="/settings" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md transition-colors mt-4 md:mt-0 font-semibold">
             <Settings className="w-4 h-4" /> Cài đặt
-          </button>
+          </Link>
         </div>
 
         {/* Tabs */}

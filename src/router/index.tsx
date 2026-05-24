@@ -29,6 +29,7 @@ import { SearchPage } from "@/pages/client/SearchPage";
 import { VipPage } from "@/pages/client/VipPage";
 import { MomoCallbackPage } from "@/pages/client/MomoCallbackPage";
 import { VipPackagesManagementPage } from "@/pages/admin/VipPackagesManagementPage";
+import { SettingsPage } from "@/pages/client/SettingsPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <AuthPage /> },
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
       { path: "movie/:id", element: <MovieDetailPage /> },
       { path: "watch/:id", element: <WatchPage /> },
       { path: "profile", element: <ProfilePage /> },
+      { path: "settings", element: <SettingsPage /> },
       { path: "search", element: <SearchPage /> },
       { path: "vip", element: <VipPage /> },
       { path: "momo-callback", element: <MomoCallbackPage /> },

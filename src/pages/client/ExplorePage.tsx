@@ -13,18 +13,17 @@ export const ExplorePage = () => {
   const [movies, setMovies] = useState<MovieListItem[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
+  const [years, setYears] = useState<number[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Generate years list (from 2026 down to 2000)
-  const years = Array.from({ length: 27 }, (_, i) => 2026 - i);
-
-  // Load genres and countries on component mount
+  // Load genres, countries and years on component mount
   useEffect(() => {
-    genreService.getAll().then(setGenres).catch(console.error);
+    genreService.getActive().then(setGenres).catch(console.error);
     movieService.getCountries().then(setCountries).catch(console.error);
+    movieService.getYears().then(setYears).catch(console.error);
   }, []);
 
   // Update query parameters in URL (purging empty values)

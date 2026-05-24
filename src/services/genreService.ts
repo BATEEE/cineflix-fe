@@ -12,6 +12,11 @@ const genreService = {
     return response.data.data as Genre[];
   },
 
+  getActive: async () => {
+    const response = await axiosClient.get('/api/genre/active');
+    return response.data.data as Genre[];
+  },
+
   create: async (name: string) => {
     const response = await axiosClient.post('/api/genre', { name });
     return response.data;

@@ -142,6 +142,11 @@ const movieService = {
     return response.data.data as string[];
   },
 
+  getYears: async () => {
+    const response = await axiosClient.get('/api/movie/years');
+    return response.data.data as number[];
+  },
+
   getById: async (id: number) => {
     const response = await axiosClient.get(`/api/movie/${id}`);
     return response.data.data as MovieDetail;
