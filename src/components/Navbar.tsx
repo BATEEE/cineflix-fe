@@ -136,12 +136,14 @@ export const Navbar = () => {
           )}
 
           {/* VIP Button */}
-          <Link
-            to="/vip"
-            className="hidden sm:block text-[13px] font-bold text-black bg-brand-gold hover:bg-yellow-400 px-3 py-1.5 rounded-md transition-colors shadow-[0_0_10px_rgba(255,193,7,0.3)]"
-          >
-            MUA VIP
-          </Link>
+          {(!isAuthenticated || !user?.isVip) && (
+            <Link
+              to="/vip"
+              className="hidden sm:block text-[13px] font-bold text-black bg-brand-gold hover:bg-yellow-400 px-3 py-1.5 rounded-md transition-colors shadow-[0_0_10px_rgba(255,193,7,0.3)]"
+            >
+              MUA VIP
+            </Link>
+          )}
 
           {isAuthenticated ? (
             <>

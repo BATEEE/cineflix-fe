@@ -35,6 +35,10 @@ const vipPackageService = {
   confirmMomo: async (orderId: string, resultCode: string) => {
     const response = await axiosClient.get(`/api/vippackage/momo-confirm?orderId=${orderId}&resultCode=${resultCode}`);
     return response.data;
+  },
+  getMySubscription: async () => {
+    const response = await axiosClient.get('/api/vippackage/my-subscription');
+    return response.data.data as { isVip: boolean; packageName: string | null; expireDate: string | null };
   }
 };
 

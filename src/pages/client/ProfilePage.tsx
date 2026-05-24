@@ -14,6 +14,7 @@ export const ProfilePage = () => {
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
   const [favorites, setFavorites] = useState<FavListItem[]>([]);
   const [vipPackages, setVipPackages] = useState<VipPackage[]>([]);
+  const [subscription, setSubscription] = useState<{ isVip: boolean; packageName: string | null; expireDate: string | null } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleTabChange = (tab: string) => {
@@ -33,8 +34,12 @@ export const ProfilePage = () => {
           const data = await favListService.getMyList();
           setFavorites(data);
         } else if (activeTab === 'vip') {
-          const data = await vipPackageService.getAll();
-          setVipPackages(data);
+          const [packagesData, subscriptionData] = await Promise.all([
+            vipPackageService.getAll(),
+            vipPackageService.getMySubscription()
+          ]);
+          setVipPackages(packagesData);
+          setSubscription(subscriptionData);
         }
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu trang cá nhân:", err);
@@ -67,9 +72,15 @@ export const ProfilePage = () => {
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{user.displayName || user.username}</h1>
             <p className="text-gray-400 mb-4">{user.email}</p>
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <span className="bg-brand-gold text-black text-xs font-bold px-3 py-1 rounded shadow-sm flex items-center gap-1">
-                <Crown className="w-4 h-4" /> THÀNH VIÊN VIP
-              </span>
+              {user.isVip ? (
+                <span className="bg-brand-gold text-black text-xs font-bold px-3 py-1 rounded shadow-sm flex items-center gap-1">
+                  <Crown className="w-4 h-4" /> THÀNH VIÊN VIP
+                </span>
+              ) : (
+                <span className="bg-gray-800 text-gray-400 text-xs font-bold px-3 py-1 rounded shadow-sm border border-gray-700">
+                  THÀNH VIÊN THƯỜNG
+                </span>
+              )}
               <span className="bg-gray-800 text-gray-300 text-xs font-medium px-3 py-1 rounded border border-gray-700">
                 Gia nhập: 2026
               </span>
@@ -170,6 +181,34 @@ export const ProfilePage = () => {
               {/* VIP Packages */}
               {activeTab === 'vip' && (
                 <div>
+                  {/* VIP Info Card if active */}
+                  {subscription?.isVip && (
+                    <div className="max-w-5xl mx-auto mb-12 bg-gradient-to-r from-yellow-600/20 via-brand-gold/15 to-yellow-900/20 border border-brand-gold/60 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-[0_0_20px_rgba(212,175,55,0.15)] backdrop-blur-md">
+                      <div className="flex items-center gap-5 text-center sm:text-left flex-col sm:flex-row">
+                        <div className="w-16 h-16 rounded-full bg-brand-gold/25 border border-brand-gold/50 flex items-center justify-center shrink-0 animate-pulse">
+                          <Crown className="w-8 h-8 text-brand-gold" />
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap">
+                            <h3 className="text-2xl font-black text-white tracking-wide uppercase">Gói Đang Hoạt Động</h3>
+                            <span className="bg-brand-gold text-black text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                              {subscription.packageName || "Premium VIP"}
+                            </span>
+                          </div>
+                          <p className="text-gray-300 mt-2 text-[14px]">
+                            Trạng thái: <span className="text-emerald-400 font-bold">Đang kích hoạt</span> • Hạn dùng đến hết ngày:{" "}
+                            <span className="text-white font-bold">
+                              {subscription.expireDate ? new Date(subscription.expireDate).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' }) : "Chưa xác định"}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="shrink-0 bg-white/5 border border-white/10 px-4 py-2.5 rounded-lg text-center text-xs text-gray-400 font-medium max-w-[200px]">
+                        Hệ thống tự động kích hoạt mọi đặc quyền xem phim 4K cho bạn.
+                      </div>
+                    </div>
+                  )}
+
                   <div className="text-center max-w-2xl mx-auto mb-10">
                     <h2 className="text-3xl font-bold text-white mb-4">Nâng cấp trải nghiệm điện ảnh</h2>
                     <p className="text-gray-400">Chọn gói cước phù hợp với bạn để thưởng thức kho phim bản quyền, không quảng cáo với chất lượng lên đến 4K.</p>
@@ -191,9 +230,12 @@ export const ProfilePage = () => {
                             <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Chất lượng {idx === 0 ? 'HD' : (idx === 1 ? 'Full HD' : '4K')}
                           </li>
                         </ul>
-                        <button className={`w-full py-3 rounded-lg font-bold transition-colors ${idx === 1 ? 'bg-brand-gold text-black hover:bg-yellow-400' : 'bg-gray-800 text-white hover:bg-gray-700'}`}>
+                        <Link 
+                          to="/vip"
+                          className={`w-full py-3 rounded-lg font-bold text-center transition-colors block ${idx === 1 ? 'bg-brand-gold text-black hover:bg-yellow-400' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+                        >
                           Chọn Gói Này
-                        </button>
+                        </Link>
                       </div>
                     ))}
                   </div>
