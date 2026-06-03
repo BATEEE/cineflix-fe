@@ -65,6 +65,19 @@ export interface AdminCommentListItem {
   isDeleted: boolean;
 }
 
+export interface AdminTransactionListItem {
+  id: number;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  packageId: number;
+  packageName: string;
+  amount: number;
+  paymentMethod: string;
+  transactionDate: string;
+  status: boolean;
+}
+
 export interface AdminVipPackage {
   id: number;
   packageName: string;
@@ -134,6 +147,11 @@ const adminService = {
   toggleVipPackageActive: async (id: number) => {
     const response = await axiosClient.put(`/api/admin/vip-packages/${id}/toggle-active`);
     return response.data;
+  },
+
+  getTransactions: async () => {
+    const response = await axiosClient.get('/api/admin/transactions');
+    return response.data.data as AdminTransactionListItem[];
   },
 };
 

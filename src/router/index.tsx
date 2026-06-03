@@ -12,6 +12,7 @@ import { StudiosManagementPage } from '@/pages/admin/StudiosManagementPage'
 import { PersonsManagementPage } from '@/pages/admin/PersonsManagementPage'
 import { UsersManagementPage } from '@/pages/admin/UsersManagementPage'
 import { CommentsManagementPage } from '@/pages/admin/CommentsManagementPage'
+import { TransactionsManagementPage } from '@/pages/admin/TransactionsManagementPage'
 import { StudioLayout } from '@/layouts/StudioLayout'
 import { StudioDashboard } from '@/pages/studio/StudioDashboard'
 import { StudioMoviesPage } from '@/pages/studio/StudioMoviesPage'
@@ -73,6 +74,7 @@ export const router = createBrowserRouter([
           { path: 'users', element: <UsersManagementPage /> },
           { path: 'comments', element: <CommentsManagementPage /> },
           { path: 'vip-packages', element: <VipPackagesManagementPage /> },
+          { path: 'transactions', element: <TransactionsManagementPage /> },
         ]
       }
     ]
