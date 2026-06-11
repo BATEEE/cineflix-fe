@@ -1,104 +1,85 @@
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useRegister } from '@/features/auth/hooks/useRegister'
-import type { RegisterFormData } from '@/features/auth/types'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRegister } from "@/features/auth/hooks/useRegister";
+import { FloatingInput } from "./FloatingInput";
 
-const schema = z
+const registerSchema = z
   .object({
-    fullName: z.string().min(2, 'Họ tên tối thiểu 2 ký tự'),
-    email: z.string().email('Email không hợp lệ'),
-    password: z.string().min(8, 'Mật khẩu tối thiểu 8 ký tự'),
+    username: z.string().min(3, "Username tối thiểu 3 ký tự."),
+    displayName: z.string().min(2, "Tên hiển thị tối thiểu 2 ký tự."),
+    email: z.email("Vui lòng nhập email hợp lệ."),
+    password: z.string().min(6, "Mật khẩu từ 6 ký tự trở lên."),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Mật khẩu không khớp',
-    path: ['confirmPassword'],
-  })
+    message: "Mật khẩu không khớp.",
+    path: ["confirmPassword"],
+  });
 
-export const RegisterForm = () => {
-  const { handleRegister, isLoading, error, success } = useRegister()
+type RegisterFormData = z.infer<typeof registerSchema>;
+
+interface RegisterFormProps {
+  onSuccess: (email: string, message: string) => void;
+}
+
+export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
+  const { handleRegister, isLoading, error } = useRegister(onSuccess);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(schema),
-  })
-
-  if (success) {
-    return (
-      <div className="rounded-lg bg-green-50 px-4 py-6 text-center text-sm text-green-600">
-        Đăng ký thành công! Đang chuyển đến trang đăng nhập...
-      </div>
-    )
-  }
+    resolver: zodResolver(registerSchema),
+  });
 
   return (
-    <form onSubmit={handleSubmit(handleRegister)} className="space-y-4">
+    <form
+      onSubmit={handleSubmit(handleRegister)}
+      className="flex flex-col gap-4 my-4"
+    >
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-          {error}
+        <div className="px-4 py-3 rounded-xl bg-[#E50914]/10 border border-[#E50914]/30 text-red-300 text-[13.5px]">
+          ⚠️ {error}
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="fullName">Họ và tên</Label>
-        <Input
-          id="fullName"
-          placeholder="Nguyễn Văn A"
-          {...register('fullName')}
-        />
-        {errors.fullName && (
-          <p className="text-xs text-red-500">{errors.fullName.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="example@email.com"
-          {...register('email')}
-        />
-        {errors.email && (
-          <p className="text-xs text-red-500">{errors.email.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="password">Mật khẩu</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="Tối thiểu 8 ký tự"
-          {...register('password')}
-        />
-        {errors.password && (
-          <p className="text-xs text-red-500">{errors.password.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          placeholder="Nhập lại mật khẩu"
-          {...register('confirmPassword')}
-        />
-        {errors.confirmPassword && (
-          <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>
-        )}
-      </div>
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
-      </Button>
+      <FloatingInput
+        label="Username"
+        {...register("username")}
+        error={errors.username?.message}
+      />
+      <FloatingInput
+        label="Tên hiển thị"
+        {...register("displayName")}
+        error={errors.displayName?.message}
+      />
+      <FloatingInput
+        label="Email"
+        type="email"
+        {...register("email")}
+        error={errors.email?.message}
+      />
+      <FloatingInput
+        label="Mật khẩu"
+        type="password"
+        {...register("password")}
+        error={errors.password?.message}
+      />
+      <FloatingInput
+        label="Xác nhận mật khẩu"
+        type="password"
+        {...register("confirmPassword")}
+        error={errors.confirmPassword?.message}
+      />
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="mt-4 w-full bg-[#E50914] hover:bg-[#C11119] text-white text-[15px] font-semibold h-[50px] rounded-xl transition-all duration-300 disabled:opacity-50 active:scale-[0.98] shadow-lg shadow-[#E50914]/20"
+      >
+        {isLoading ? "Đang gửi mã xác thực..." : "Đăng ký ngay"}
+      </button>
     </form>
-  )
-}
+  );
+};

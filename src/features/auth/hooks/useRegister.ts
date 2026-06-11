@@ -1,28 +1,28 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import type { RegisterFormData } from '@/features/auth/types'
+import type { RegisterPayload } from '@/types/auth'
+import authService from '@/services/authService'
 
-export const useRegister = () => {
+export const useRegister = (onSuccess: (email: string, message: string) => void) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const navigate = useNavigate()
 
-  const handleRegister = async (data: RegisterFormData) => {
+  const handleRegister = async (data: RegisterPayload) => {
     setIsLoading(true)
     setError(null)
     try {
-      // TODO: thay bằng API call thật
-      await new Promise((r) => setTimeout(r, 1000))
-
-      setSuccess(true)
-      setTimeout(() => navigate('/login'), 1500)
-    } catch {
-      setError('Đăng ký thất bại, vui lòng thử lại.')
+      const response = await authService.register(data)
+      if (!response.success) {
+        setError(response.message)
+        return
+      }
+      onSuccess(data.email, 'Mã xác thực đã được gửi về email của bạn!')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
+      setError(typeof msg === 'string' ? msg : 'Đã có lỗi xảy ra.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  return { handleRegister, isLoading, error, success }
+  return { handleRegister, isLoading, error, setError }
 }
