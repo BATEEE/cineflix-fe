@@ -119,8 +119,8 @@ Make sure you have [Node.js](https://nodejs.org/) installed (recommended version
     ```
 
 4.  **Backend Integration**:
-    By default, the HTTP client points to `http://localhost:5063` (specified in [axiosClient.ts](file:///d:/Tai_Lieu_Nam_4/hk2/LTCSDL/project/frontend/cineflix-fe/src/api/axiosClient.ts)). Ensure your backend application is up and running on this port, or adjust the `baseURL` in:
-    [axiosClient.ts](file:///d:/Tai_Lieu_Nam_4/hk2/LTCSDL/project/frontend/cineflix-fe/src/api/axiosClient.ts)
+    By default, the HTTP client points to `http://localhost:5063` (specified in [axiosClient.ts](src/api/axiosClient.ts)). Ensure your backend application is up and running on this port, or adjust the `baseURL` in:
+    [axiosClient.ts](src/api/axiosClient.ts)
 
 ### Running Locally
 
@@ -152,7 +152,7 @@ npm run preview
 
 Permissions are enforced on the client side using:
 
-- [ProtectedRoute.tsx](file:///d:/Tai_Lieu_Nam_4/hk2/LTCSDL/project/frontend/cineflix-fe/src/components/ProtectedRoute.tsx) which decodes permissions and roles from the authentication token.
+- [ProtectedRoute.tsx](src/components/ProtectedRoute.tsx) which decodes permissions and roles from the authentication token.
 - **Role Mapping**:
   - `1` - Administrator (`/admin`)
   - `2` - Viewer / Client (`/`)
